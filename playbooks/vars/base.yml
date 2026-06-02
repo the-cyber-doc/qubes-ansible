@@ -10,6 +10,9 @@ vm_resource_config:
     maxmem: 2000
     memory: 200
     vcpus: 1
+  - vm: personal
+    maxmem: 8000
+    memory: 800
   - vm: windows_11_ltsc
     maxmem: 0
     memory: 8192

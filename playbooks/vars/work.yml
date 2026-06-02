@@ -1,0 +1,5 @@
+---
+work_base_template: "debian-{{ debian_version }}-xfce"
+host_work_template: work-template
+host_work_app: work-app
+work_private_storage: 20GB

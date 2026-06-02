@@ -1,0 +1,62 @@
+---
+#
+# Template
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/work.yml
+  tasks:
+    - include_tasks: tasks/clone_template.yml
+      vars:
+        clone_src: "{{ work_base_template }}"
+        clone_dest: "{{ host_work_template }}"
+
+- hosts: "{{ host_work_template | default([]) }}"
+  become: yes
+  connection: qubes
+  vars_files:
+    - vars/work.yml
+  roles:
+    - role: base_packages
+    - role: work
+
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/work.yml
+  tasks:
+    - name: Shutdown the Work Template
+      qubesos:
+        guest: "{{ host_work_template }}"
+        state: shutdown
+    - name: Remove the network
+      ansible.builtin.command: qvm-prefs {{ host_work_template }} netvm ''
+
+#
+# AppVM
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/work.yml
+  tasks:
+    - name: Check if AppVM exists
+      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w {{ host_work_app }}"
+      register: app_check
+      failed_when: false
+      changed_when: false
+    - name: Create AppVM
+      ansible.builtin.command: qvm-create --class AppVM --label blue --template {{ host_work_template }} {{ host_work_app }}
+      when: app_check.rc != 0
+    - name: Set AppVM network
+      ansible.builtin.command: qvm-prefs {{ host_work_app }} netvm {{ netvm_default }}
+    - include_role:
+        name: set_prefs
+        apply:
+          tags: [prefs, work]
+      tags: [prefs]
+      vars:
+        target_vm: "{{ host_work_app }}"
+        vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
+        vm_private_storage: "{{ work_private_storage if app_check.rc != 0 else '' }}"

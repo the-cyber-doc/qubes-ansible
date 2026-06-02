@@ -14,3 +14,11 @@
 - name: Set vcpus for {{ target_vm }}
   ansible.builtin.command: qvm-prefs {{ target_vm }} vcpus {{ vm_vcpus }}
   when: vm_vcpus | string | length > 0
+
+- name: Set private storage for {{ target_vm }}
+  ansible.builtin.command: qvm-volume resize {{ target_vm }}:private {{ vm_private_storage }}
+  when: vm_private_storage | string | length > 0
+
+- name: Set root storage for {{ target_vm }}
+  ansible.builtin.command: qvm-volume resize {{ target_vm }}:root {{ vm_root_storage }}
+  when: vm_root_storage | string | length > 0

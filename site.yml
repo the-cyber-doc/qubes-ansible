@@ -19,3 +19,9 @@
 
 - import_playbook: playbooks/messenging.yml
   tags: [messenging]
+
+- import_playbook: playbooks/claude_desktop.yml
+  tags: [claude-desktop]
+
+- import_playbook: playbooks/work.yml
+  tags: [work]

@@ -1,0 +1,62 @@
+---
+#
+# Template
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/claude_desktop.yml
+  tasks:
+    - include_tasks: tasks/clone_template.yml
+      vars:
+        clone_src: "{{ claude_desktop_base_template }}"
+        clone_dest: "{{ host_claude_desktop_template }}"
+
+- hosts: "{{ host_claude_desktop_template | default([]) }}"
+  become: yes
+  connection: qubes
+  vars_files:
+    - vars/claude_desktop.yml
+  roles:
+    - role: base_packages
+    - role: claude_desktop
+
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/claude_desktop.yml
+  tasks:
+    - name: Shutdown the Claude Desktop Template
+      qubesos:
+        guest: "{{ host_claude_desktop_template }}"
+        state: shutdown
+    - name: Remove the network
+      ansible.builtin.command: qvm-prefs {{ host_claude_desktop_template }} netvm ''
+
+#
+# AppVM
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/claude_desktop.yml
+  tasks:
+    - name: Check if AppVM exists
+      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w {{ host_claude_desktop_app }}"
+      register: app_check
+      failed_when: false
+      changed_when: false
+    - name: Create AppVM
+      ansible.builtin.command: qvm-create --class AppVM --label blue --template {{ host_claude_desktop_template }} {{ host_claude_desktop_app }}
+      when: app_check.rc != 0
+    - name: Set AppVM network
+      ansible.builtin.command: qvm-prefs {{ host_claude_desktop_app }} netvm {{ netvm_default }}
+    - include_role:
+        name: set_prefs
+        apply:
+          tags: [prefs, claude-desktop]
+      tags: [prefs]
+      vars:
+        target_vm: "{{ host_claude_desktop_app }}"
+        vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
+        vm_private_storage: "{{ claude_desktop_private_storage if app_check.rc != 0 else '' }}"

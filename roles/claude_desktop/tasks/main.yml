@@ -1,0 +1,23 @@
+---
+- name: Download Claude Desktop GPG key
+  ansible.builtin.get_url:
+    url: https://pkg.claude-desktop-debian.dev/KEY.gpg
+    dest: /tmp/claude-desktop.gpg
+    mode: '0644'
+
+- name: Dearmor Claude Desktop GPG key
+  ansible.builtin.command:
+    cmd: gpg --dearmor -o /usr/share/keyrings/claude-desktop.gpg /tmp/claude-desktop.gpg
+    creates: /usr/share/keyrings/claude-desktop.gpg
+
+- name: Add Claude Desktop repository
+  ansible.builtin.copy:
+    content: "deb [signed-by=/usr/share/keyrings/claude-desktop.gpg arch=amd64,arm64] https://pkg.claude-desktop-debian.dev stable main\n"
+    dest: /etc/apt/sources.list.d/claude-desktop.list
+    mode: '0644'
+
+- name: Install Claude Desktop
+  ansible.builtin.apt:
+    name: claude-desktop
+    state: present
+    update_cache: true

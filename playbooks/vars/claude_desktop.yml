@@ -1,0 +1,5 @@
+---
+claude_desktop_base_template: "debian-{{ debian_version }}-xfce"
+host_claude_desktop_template: claude-desktop-template
+host_claude_desktop_app: claude-desktop-app
+claude_desktop_private_storage: 20GB
