@@ -28,3 +28,11 @@ firefox_available_extra_extensions:
 # Set in a playbook to pre-install optional extensions (user can remove them)
 # Example: firefox_extra_extensions: [multi_account_containers, facebook_container]
 firefox_extra_extensions: []
+
+# Set to "host:port" (e.g. "127.0.0.1:8080") to route all traffic through a
+# manual proxy. Empty string leaves Firefox on its default (no) proxy.
+firefox_proxy: ""
+
+# Name (from profiles.ini) of the profile Firefox launchers are forced to use, so
+# the desktop entry honours the skel profile instead of a per-install dedicated one.
+firefox_profile_name: default

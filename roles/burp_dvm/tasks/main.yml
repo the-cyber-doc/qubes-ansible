@@ -1,0 +1,78 @@
+---
+- name: Ensure Burp config directory exists
+  ansible.builtin.file:
+    path: "{{ burp_config_root }}"
+    state: directory
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0755'
+
+- name: Deploy Burp auto-start proxy config
+  ansible.builtin.template:
+    src: burp-config.json.j2
+    dest: "{{ burp_user_config }}"
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0644'
+
+- name: Ensure Burp Java preferences directory exists
+  ansible.builtin.file:
+    path: "{{ burp_prefs_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Ensure Burp Java preferences tree is owned by the VM user
+  ansible.builtin.file:
+    path: "{{ vm_user_home }}/.java"
+    state: directory
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    recurse: true
+
+- name: Pre-seed Burp Community EULA acceptance
+  ansible.builtin.template:
+    src: burp-prefs.xml.j2
+    dest: "{{ burp_prefs_file }}"
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0644'
+
+- name: Deploy Burp launcher script
+  ansible.builtin.template:
+    src: start-burp.sh.j2
+    dest: "{{ burp_launcher }}"
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0755'
+
+- name: Ensure applications directory exists
+  ansible.builtin.file:
+    path: "{{ vm_user_home }}/.local/share/applications"
+    state: directory
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0755'
+
+- name: Deploy Burp .desktop launcher
+  ansible.builtin.template:
+    src: burp.desktop.j2
+    dest: "{{ burp_desktop_file }}"
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0644'
+
+#- name: Ensure autostart directory exists
+#  ansible.builtin.file:
+#    path: "{{ burp_autostart_dir }}"
+#    state: directory
+#    owner: "{{ vm_user }}"
+#    group: "{{ vm_group }}"
+#    mode: '0755'
+#
+#- name: Link Burp .desktop into autostart
+#  ansible.builtin.file:
+#    src: "{{ burp_desktop_file }}"
+#    dest: "{{ burp_autostart_dir }}/burp.desktop"
+#    state: link
+#    owner: "{{ vm_user }}"
+#    group: "{{ vm_group }}"

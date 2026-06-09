@@ -1,0 +1,95 @@
+---
+#
+# Template
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/burp.yml
+  tasks:
+    - include_tasks: tasks/clone_template.yml
+      vars:
+        clone_src: "{{ burp_base_template }}"
+        clone_dest: "{{ host_burp_template }}"
+
+- hosts: "{{ host_burp_template | default([]) }}"
+  become: yes
+  connection: qubes
+  vars_files:
+    - vars/burp.yml
+  roles:
+    - role: base_packages
+    - role: burp_template
+    - role: firefox
+      vars:
+        firefox_proxy: "127.0.0.1:{{ burp_proxy_port }}"
+
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/burp.yml
+  tasks:
+    - name: Shutdown the Burp Template
+      qubesos:
+        guest: "{{ host_burp_template }}"
+        state: shutdown
+    - name: Remove network access
+      command: qvm-prefs {{ host_burp_template }} netvm ''
+
+#
+# DVM
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/burp.yml
+  tasks:
+    - name: Check if DVM exists
+      shell: "qvm-ls --raw-data --fields name | grep -w {{ host_burp_dvm }}"
+      register: burp_dvm_check
+      failed_when: false
+      changed_when: false
+    - name: Create DVM
+      command: qvm-create --class AppVM --label blue --template {{ host_burp_template }} {{ host_burp_dvm }}
+      when: burp_dvm_check.rc != 0
+    - name: Set DVM label
+      command: qvm-prefs {{ host_burp_dvm }} label blue
+    - name: Set DVM network
+      command: qvm-prefs {{ host_burp_dvm }} netvm {{ netvm_default }}
+    - name: Set as DispVM template
+      command: qvm-prefs {{ host_burp_dvm }} template_for_dispvms true
+    - name: Add the DVM to the App menu
+      command: qvm-features {{ host_burp_dvm }} appmenus-dispvm 1
+    - include_role:
+        name: set_prefs
+        apply:
+          tags: [prefs, burp]
+      tags: [prefs]
+      vars:
+        target_vm: "{{ host_burp_dvm }}"
+        vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
+        vm_memory: "{{ burp_memory }}"
+        vm_maxmem: "{{ burp_maxmem }}"
+
+- hosts: "{{ host_burp_dvm | default([]) }}"
+  become: yes
+  connection: qubes
+  vars_files:
+    - vars/burp.yml
+  roles:
+    - role: burp_dvm
+
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/burp.yml
+  tasks:
+    - name: Shutdown the Burp DVM
+      qubesos:
+        guest: "{{ host_burp_dvm }}"
+        state: shutdown
+
+# No named DispVM is created: starting an app from the "{{ host_burp_dvm }}"
+# disposable template spawns a fresh disposable VM every time. Memory limits and
+# all in-VM config (Burp auto-start, Firefox proxy) are inherited from the
+# template by each new disposable.

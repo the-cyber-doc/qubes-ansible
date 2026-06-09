@@ -3,6 +3,11 @@
   connection: qubes
   roles:
     - role: base_packages
+    - role: firefox
+      vars:
+        firefox_extra_extensions:
+          - fireshot
+          - print_edit_we
 
 - hosts: local
   connection: local

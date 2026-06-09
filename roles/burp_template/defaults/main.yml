@@ -1,0 +1,4 @@
+---
+# PortSwigger always serves the latest Community Edition Linux installer here.
+burp_installer_url: "https://portswigger.net/burp/releases/download?product=community&type=Linux"
+burp_install_dir: /opt/BurpSuiteCommunity

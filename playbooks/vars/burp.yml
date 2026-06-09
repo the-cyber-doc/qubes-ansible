@@ -1,0 +1,7 @@
+---
+burp_base_template: "debian-{{ debian_version }}"
+host_burp_template: burp-template
+host_burp_dvm: burp-dvm
+burp_memory: 4000
+burp_maxmem: 4000
+burp_proxy_port: 8080

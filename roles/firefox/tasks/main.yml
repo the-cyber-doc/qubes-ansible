@@ -17,6 +17,10 @@
   ansible.builtin.set_fact:
     firefox_dist_path: "{{ '/usr/lib/firefox-esr/distribution' if ansible_os_family == 'Debian' else '/usr/lib/firefox/distribution' }}"
 
+- name: Set Firefox desktop file path
+  ansible.builtin.set_fact:
+    firefox_desktop_file: "{{ '/usr/share/applications/firefox-esr.desktop' if ansible_os_family == 'Debian' else '/usr/share/applications/firefox.desktop' }}"
+
 - name: Create Firefox distribution directory
   ansible.builtin.file:
     path: "{{ firefox_dist_path }}"
@@ -50,6 +54,12 @@
         Extensions:
           Install: "{{ _firefox_extra_install_urls }}"
 
+- name: Add manual proxy policy
+  ansible.builtin.set_fact:
+    _firefox_policies:
+      policies: "{{ _firefox_policies.policies | combine({'Proxy': {'Mode': 'manual', 'HTTPProxy': firefox_proxy, 'SSLProxy': firefox_proxy, 'UseHTTPProxyForAllProtocols': true, 'Locked': false}}) }}"
+  when: firefox_proxy | length > 0
+
 - name: Deploy Firefox policies
   ansible.builtin.copy:
     content: "{{ _firefox_policies | to_nice_json }}\n"
@@ -76,4 +86,15 @@
     src: user.js
     dest: /etc/skel/.mozilla/firefox/default/user.js
     mode: '0644'
+  become: yes
+
+# Force every launcher (menu, actions) to open the configured profile, bypassing
+# Firefox's per-install "dedicated profile" selection. Anchored on "Exec=" so the
+# TryExec= line is untouched; the leading lookahead skips lines already carrying
+# "-P" so the task is idempotent.
+- name: Force Firefox launchers to use the configured profile
+  ansible.builtin.replace:
+    path: "{{ firefox_desktop_file }}"
+    regexp: '^Exec=(?!.* -P )(\S+)(.*)$'
+    replace: 'Exec=\1 -P {{ firefox_profile_name }}\2'
   become: yes

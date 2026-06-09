@@ -1,0 +1,55 @@
+#!/bin/bash
+# Web-testing session launcher for the Burp disposable.
+#
+# Firefox is configured to send all traffic through Burp, so it can only reach
+# the network (and download its force-installed extensions) once Burp's proxy is
+# up and its CA is trusted. This script enforces that order:
+#   1. start Burp (the EULA is pre-seeded; --config-file skips the config step,
+#      so it goes straight to the proxy),
+#   2. wait for the proxy listener and fetch Burp's CA certificate,
+#   3. trust the CA in the Firefox profile,
+#   4. launch Firefox.
+set -u
+
+LOG="$HOME/.burp-session.log"
+exec >>"$LOG" 2>&1
+echo "=== burp session $(date) ==="
+
+BURP="{{ burp_install_dir }}/BurpSuiteCommunity"
+CONFIG="{{ burp_user_config }}"
+PROFILE_DIR="{{ firefox_profile_dir }}"
+PROXY="http://127.0.0.1:{{ burp_proxy_port }}"
+
+# 1. Start Burp with the proxy listener pre-configured to run.
+"$BURP" --config-file="$CONFIG" &
+
+# 2. Wait (up to ~5 min, covering the one-time startup prompt) for the proxy to
+#    answer and serve its CA via the special http://burp/cert endpoint.
+CA_FILE="$(mktemp --suffix=.der)"
+for _ in $(seq 1 150); do
+    if curl -fsS --proxy "$PROXY" http://burp/cert -o "$CA_FILE" && [ -s "$CA_FILE" ]; then
+        echo "Fetched Burp CA certificate"
+        break
+    fi
+    sleep 2
+done
+
+# 3. Trust the CA in the Firefox NSS database (certutil creates it if absent).
+if [ -s "$CA_FILE" ]; then
+    mkdir -p "$PROFILE_DIR"
+    certutil -d "sql:$PROFILE_DIR" -D -n "Burp Suite CA" 2>/dev/null || true
+    if certutil -d "sql:$PROFILE_DIR" -A -n "Burp Suite CA" -t "C,," -i "$CA_FILE"; then
+        echo "Imported Burp CA into Firefox profile $PROFILE_DIR"
+    fi
+else
+    echo "WARNING: Burp proxy/CA never became available — check that Burp started" >&2
+fi
+rm -f "$CA_FILE"
+
+# 4. Launch Firefox now that the proxy is up and the CA is trusted, so its
+#    force-installed extensions download successfully through Burp. Selecting the
+#    profile explicitly on the command line makes Firefox use exactly the skel
+#    profile (where the CA was imported and user.js lives) and bypasses the
+#    per-install "dedicated profile" selection that would otherwise create a fresh
+#    profile missing the certificate.
+firefox-esr --profile "$PROFILE_DIR" &

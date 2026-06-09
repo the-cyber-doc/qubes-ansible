@@ -1,0 +1,15 @@
+---
+burp_install_dir: /opt/BurpSuiteCommunity
+burp_proxy_port: 8080
+burp_config_root: "{{ vm_user_home }}/.BurpSuite"
+burp_user_config: "{{ burp_config_root }}/burp-config.json"
+burp_launcher: "{{ burp_config_root }}/start-burp.sh"
+burp_desktop_file: "{{ vm_user_home }}/.local/share/applications/burp.desktop"
+burp_autostart_dir: "{{ vm_user_home }}/.config/autostart"
+# Firefox profile created from /etc/skel by the firefox role (profiles.ini Path=default)
+firefox_profile_dir: "{{ vm_user_home }}/.mozilla/firefox/default"
+# Pre-seed Burp's Community EULA acceptance (Java prefs) so the licence prompt
+# never appears in disposables. "eulafree" is the version of the agreed EULA.
+burp_eula_version: 2
+burp_prefs_dir: "{{ vm_user_home }}/.java/.userPrefs/burp"
+burp_prefs_file: "{{ burp_prefs_dir }}/prefs.xml"

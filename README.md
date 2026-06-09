@@ -22,6 +22,9 @@ Specifically it automates:
 - **sys-gpu** — a shared GPU DispVM template for workloads that need the card but
   not Ollama
 - **Messaging** — Signal, WhatsApp (Whatsie), and Chrome in an isolated Fedora AppVM
+- **Burp** — a disposable web-testing VM: Burp Suite Community auto-starts its proxy and
+  Firefox is pre-configured to route its traffic through Burp; a fresh disposable is spawned
+  on every launch
 - **Base packages** — `htop` and `tmux` on every Linux template and standalone VM
 
 ---
@@ -56,7 +59,8 @@ Template → DVM → DispVM → Networking
 
 1. **Template** — clone a base Qubes template, temporarily enable networking,
    install packages and services inside the VM, then remove networking and shut down.
-   The `base_packages` role runs here first on every template to establish a baseline.
+   The `base_packages` and `firefox` roles run here first on every template to establish a baseline
+   (the `base.yml` play installs Firefox with the `fireshot` and `print_edit_we` optional extensions).
 2. **DVM** — create an AppVM with `template_for_dispvms=true`. This is the
    *persistent layer*: bind-dirs are configured here and models are pulled into
    this VM's private volume so they survive DispVM restarts.
@@ -109,12 +113,13 @@ without removing the code.
 │   └── hosts.yml                # All VMs grouped by type; windows_vms group for exclusion
 │
 ├── playbooks/
-│   ├── base.yml                 # Installs base packages on all Linux templates + standalones
+│   ├── base.yml                 # Installs base packages + Firefox on all Linux templates + standalones
 │   ├── dom0.yml                 # Dom0: secure boot key management
 │   ├── llm.yml                  # LLM stack: template → DVM → DispVM → networking
 │   ├── ocr.yml                  # OCR stack: template → DVM → DispVM → networking
 │   ├── sys_gpu.yml              # sys-gpu: template → DVM → DispVM
 │   ├── messenging.yml           # Messaging: template packages + AppVM autostart
+│   ├── burp.yml                 # Burp: template (Burp + Firefox proxy) → disposable template
 │   │
 │   ├── group_vars/
 │   │   └── all.yml              # Global vars: paths, netvm, debian_version
@@ -123,7 +128,8 @@ without removing the code.
 │   │   ├── llm.yml              # host_llm_template, host_llm_dvm, llm_memory, llm_tcp_port …
 │   │   ├── ocr.yml              # host_ocr_template, host_ocr_dvm, ocr_tcp_port …
 │   │   ├── sys_gpu.yml          # host_sys_gpu_template, gpu_pci_id_vga, gpu_pci_id_audio …
-│   │   └── messenging.yml       # host_messenging_template, host_messenging_vm …
+│   │   ├── messenging.yml       # host_messenging_template, host_messenging_vm …
+│   │   └── burp.yml             # host_burp_template, host_burp_dvm, burp_dispvm, burp_proxy_port …
 │   │
 │   └── tasks/
 │       └── clone_template.yml         # Reusable: clone + set netvm + set qrexec_timeout
@@ -139,6 +145,8 @@ without removing the code.
     ├── sys_gpu_dvm/             # Empty — no additional DVM config needed
     ├── secureboot/              # sbctl backup/restore scripts + kernel install hook
     ├── messenging/              # Chrome, Snap, Signal, Whatsie; autostart symlinks
+    ├── burp_template/           # Installs Burp Suite Community + Firefox cert tooling (certutil)
+    ├── burp_dvm/                # Burp proxy config + autostart session script (start Burp → trust CA → open Firefox)
     ├── firefox/                 # Firefox install, policies, and skel profile
     └── set_prefs/               # Reusable: set qrexec_timeout / maxmem / memory / vcpus on any VM
 ```
@@ -162,6 +170,23 @@ whichever feature playbook needs it.
   - Force-installs **uBlock Origin** and **Adblock Plus** (user cannot remove)
 - Places a pre-configured profile skeleton in `/etc/skel/.mozilla/firefox/` so every
   AppVM that is created from the template inherits the profile automatically
+- Rewrites the `Exec=` lines of the system `.desktop` launcher
+  (`firefox-esr.desktop` on Debian, `firefox.desktop` on RedHat) to add
+  `-P {{ firefox_profile_name }}`, so launching Firefox always opens the skel
+  profile instead of a fresh per-install "dedicated profile" (which would ignore the
+  deployed `user.js` and any imported certificates)
+
+### Routing through a proxy
+
+Set `firefox_proxy` to `host:port` when calling the role to add a locked manual-proxy
+policy that routes all protocols through that address (left empty by default). The
+`burp` playbook uses this to point Firefox at the local Burp listener:
+
+```yaml
+- role: firefox
+  vars:
+    firefox_proxy: "127.0.0.1:{{ burp_proxy_port }}"
+```
 
 ### Optional extensions
 
@@ -315,6 +340,7 @@ connecting to any VM. Run this after every change:
 ./ansible-playbook.sh playbooks/ocr.yml --syntax-check
 ./ansible-playbook.sh playbooks/sys_gpu.yml --syntax-check
 ./ansible-playbook.sh playbooks/messenging.yml --syntax-check
+./ansible-playbook.sh playbooks/burp.yml --syntax-check
 ./ansible-playbook.sh playbooks/base.yml --syntax-check
 
 # Or via site.yml with a tag
@@ -359,9 +385,20 @@ Always use `./ansible-playbook.sh` — never `ansible-playbook` directly.
 # Provision the messaging AppVM
 ./ansible-playbook.sh site.yml --tags messenging
 
+# Provision the Burp disposable web-testing template (Burp + Firefox proxy)
+./ansible-playbook.sh site.yml --tags burp
+
 # Apply Dom0 configuration (package updates, scripts — secureboot excluded)
 ./ansible-playbook.sh site.yml --tags dom0
 ```
+
+> **Burp disposable usage.** Launch the **Burp Suite Web-Testing Session** entry of
+> the `burp-dvm` disposable template (it spawns a fresh disposable). Burp's Community
+> EULA is pre-seeded (Java pref `eulafree`) and the session is launched with
+> `--config-file`, so Burp starts straight into its proxy without prompts. The session
+> script then waits for the proxy, trusts Burp's CA in the Firefox profile, and opens
+> Firefox (already routed through Burp), so its force-installed extensions download
+> successfully. Progress is logged to `~/.burp-session.log` in the disposable.
 
 ### Configure secure boot (Dom0 — explicit opt-in)
 

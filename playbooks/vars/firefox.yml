@@ -1,4 +1,0 @@
----
-firefox_base_template: "debian-{{ debian_version }}-xfce"
-host_firefox_template: firefox-template
-host_firefox_app: firefox-app

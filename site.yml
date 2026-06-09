@@ -5,9 +5,6 @@
 - import_playbook: playbooks/dom0.yml
   tags: [dom0]
 
-- import_playbook: playbooks/firefox.yml
-  tags: [firefox]
-
 - import_playbook: playbooks/llm.yml
   tags: [llm]
 
@@ -19,6 +16,9 @@
 
 - import_playbook: playbooks/messenging.yml
   tags: [messenging]
+
+- import_playbook: playbooks/burp.yml
+  tags: [burp]
 
 - import_playbook: playbooks/claude_desktop.yml
   tags: [claude-desktop]

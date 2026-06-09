@@ -1,0 +1,23 @@
+---
+- name: Download Burp Suite Community installer
+  ansible.builtin.get_url:
+    url: "{{ burp_installer_url }}"
+    dest: /tmp/burpsuite-installer.sh
+    mode: '0755'
+
+- name: Install Burp Suite Community
+  ansible.builtin.command:
+    cmd: "/tmp/burpsuite-installer.sh -q -overwrite -dir {{ burp_install_dir }}"
+    creates: "{{ burp_install_dir }}/BurpSuiteCommunity"
+
+- name: Remove installer
+  ansible.builtin.file:
+    path: /tmp/burpsuite-installer.sh
+    state: absent
+
+- name: Install Firefox certificate tooling
+  ansible.builtin.apt:
+    name:
+      - libnss3-tools
+      - curl
+    state: present
