@@ -57,16 +57,6 @@
     - name: Reboot after SNAP installation
       reboot:
         reboot_timeout: 300
-    - name: Install Snap Signal
-      become: yes
-      community.general.snap:
-        name: signal-desktop
-        state: present
-    - name: Install Snap Whatsie
-      become: yes
-      community.general.snap:
-        name: whatsie
-        state: present
 
 - hosts: local
   connection: local
@@ -87,6 +77,14 @@
   vars_files:
     - vars/messenging.yml
   tasks:
+    - name: Install Snap Signal
+      community.general.snap:
+        name: signal-desktop
+        state: present
+    - name: Install Snap Whatsie
+      community.general.snap:
+        name: whatsie
+        state: present
     - name: Make sure autostart folder exists
       file:
         path: "/rw/home/user/.config/autostart"
