@@ -4,4 +4,4 @@ host_burp_template: burp-template
 host_burp_dvm: burp-dvm
 burp_memory: 4000
 burp_maxmem: 4000
-burp_proxy_port: 8080
+burp_private_storage: 20GB

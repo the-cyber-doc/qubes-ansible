@@ -29,7 +29,7 @@
   tasks:
     - name: Install third party repositories
       become: yes
-      yum:
+      dnf:
         name: fedora-workstation-repositories
         state: present
     - name: Enable Google Chrome repository
@@ -38,13 +38,15 @@
         cmd: dnf config-manager setopt google-chrome.enabled=1
     - name: Install Chrome (used for Teams)
       become: yes
-      yum:
+      dnf:
         name: google-chrome-stable
         state: present
     - name: Install SNAP
       become: yes
-      yum:
-        name: snapd
+      dnf:
+        name:
+          - snapd
+          - qubes-snapd-helper
         state: present
     - name: Create SNAP Symlink
       become: yes
