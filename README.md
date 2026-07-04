@@ -475,3 +475,29 @@ ansible -i inventory/hosts.yml llm-template-debian-13-xfce \
 # Re-run base on Debian templates only
 ./ansible-playbook.sh playbooks/base.yml --limit 'debian*'
 ```
+
+---
+
+## Editing workflow (edit outside Dom0, sync in)
+
+Dom0 is intentionally kept minimal, so the project is edited on a separate VM and
+synced into Dom0 through a compressed archive rather than a shared folder.
+
+1. **Edit the Ansible project on the VM where it resides** (e.g. `my-ansible-vm`),
+   not in Dom0 directly.
+2. **Compress the files** with `./compress.sh`. It archives the project root into
+   `/tmp`, e.g. `/tmp/qubes-ansible_20260704_152237.tar.7z`.
+3. **Copy the archive to Dom0.** From Dom0:
+   ```bash
+   qvm-run -p my-ansible-vm 'cat /tmp/qubes-ansible_20260704_152237.tar.7z' > /tmp/qubes-ansible.tar.7z
+   ```
+4. **Extract the archive** from Dom0 with `./compress.sh -d` (extracts every
+   `qubes-ansible*.tar.7z` found in `/tmp` into a matching `/tmp/qubes-ansible_.../` directory).
+5. **Copy the files into the existing project:**
+   ```bash
+   cp -rf /tmp/qubes-ansible/* ~/Templates/qubes-ansible
+   ```
+6. **Run a playbook** as usual from Dom0, e.g.:
+   ```bash
+   ./ansible-playbook.sh site.yml --tags burp
+   ```

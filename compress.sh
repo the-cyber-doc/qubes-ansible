@@ -10,10 +10,10 @@ for cmd in tar 7z; do
 done
 
 decompress() {
-    mapfile -t archives < <(find "${TMP_DIR}" -maxdepth 1 -name "${ARCHIVE_PREFIX}_*.tar.7z" | sort)
+    mapfile -t archives < <(find "${TMP_DIR}" -maxdepth 1 -name "${ARCHIVE_PREFIX}*.tar.7z" | sort)
 
     if [[ ${#archives[@]} -eq 0 ]]; then
-        echo "No archives matching '${ARCHIVE_PREFIX}_*.tar.7z' found in ${TMP_DIR}"
+        echo "No archives matching '${ARCHIVE_PREFIX}*.tar.7z' found in ${TMP_DIR}"
         exit 1
     fi
 
