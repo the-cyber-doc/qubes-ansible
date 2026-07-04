@@ -61,18 +61,18 @@
     group: "{{ vm_group }}"
     mode: '0644'
 
-#- name: Ensure autostart directory exists
-#  ansible.builtin.file:
-#    path: "{{ burp_autostart_dir }}"
-#    state: directory
-#    owner: "{{ vm_user }}"
-#    group: "{{ vm_group }}"
-#    mode: '0755'
-#
-#- name: Link Burp .desktop into autostart
-#  ansible.builtin.file:
-#    src: "{{ burp_desktop_file }}"
-#    dest: "{{ burp_autostart_dir }}/burp.desktop"
-#    state: link
-#    owner: "{{ vm_user }}"
-#    group: "{{ vm_group }}"
+- name: Ensure autostart directory exists
+  ansible.builtin.file:
+    path: "{{ burp_autostart_dir }}"
+    state: directory
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0755'
+
+- name: Link Burp .desktop into autostart
+  ansible.builtin.file:
+    src: "{{ burp_desktop_file }}"
+    dest: "{{ burp_autostart_dir }}/burp.desktop"
+    state: link
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"

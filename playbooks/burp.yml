@@ -61,9 +61,9 @@
     - name: Add the DVM to the App menu
       command: qvm-features {{ host_burp_dvm }} appmenus-dispvm 1
     - include_role:
-      name: set_prefs
-      apply:
-        tags: [prefs, burp]
+        name: set_prefs
+        apply:
+          tags: [prefs, burp]
       tags: [prefs]
       vars:
         target_vm: "{{ host_burp_dvm }}"
