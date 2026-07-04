@@ -1,6 +1,54 @@
 ---
+# Bootstraps the qubes-ansible-vm/qubes-ansible package into every template.
+# This must run over connection: local + raw qvm-run rather than connection: qubes:
+# the qubes_proxy strategy routes connection: qubes through a management disposable
+# based on the target template itself, so until this package is present there is no
+# way to reach the template through that connection at all (chicken-and-egg).
+- hosts: local
+  connection: local
+  tasks:
+    - name: Check for the qubes.AnsibleVM service
+      ansible.builtin.command: qvm-run --pass-io {{ item }} "test -e /etc/qubes-rpc/qubes.AnsibleVM"
+      loop: "{{ groups['templatevms'] | difference(groups['windows_vms']) }}"
+      register: qubes_ansible_vm_check
+      failed_when: false
+      changed_when: false
+      tags: [qubes-ansible-vm]
+
+    - name: Enable network to install qubes-ansible-vm/qubes-ansible
+      ansible.builtin.command: qvm-prefs {{ item.item }} netvm {{ netvm_default }}
+      loop: "{{ qubes_ansible_vm_check.results }}"
+      when: item.rc != 0
+      tags: [qubes-ansible-vm]
+
+    - name: Install qubes-ansible-vm (RedHat) or qubes-ansible (Debian)
+      ansible.builtin.command: >
+        qvm-run --pass-io {{ item.item }}
+        "which dnf >/dev/null 2>&1 && sudo dnf install -y qubes-ansible-vm || sudo apt-get install -y qubes-ansible"
+      loop: "{{ qubes_ansible_vm_check.results }}"
+      when: item.rc != 0
+      tags: [qubes-ansible-vm]
+
+    - name: Remove network after installing qubes-ansible-vm/qubes-ansible
+      ansible.builtin.command: qvm-prefs {{ item.item }} netvm ''
+      loop: "{{ qubes_ansible_vm_check.results }}"
+      when: item.rc != 0
+      tags: [qubes-ansible-vm]
+
+    - name: Shutdown templates that were just updated
+      qubesos:
+        guest: "{{ item.item }}"
+        state: shutdown
+      loop: "{{ qubes_ansible_vm_check.results }}"
+      when: item.rc != 0
+      tags: [qubes-ansible-vm]
+
 - hosts: "templatevms:standalonevms:!windows_vms"
   connection: qubes
+  gather_facts: false
+  tasks:
+    - name: Gather facts
+      ansible.builtin.setup:
   roles:
     - role: base_packages
     - role: firefox

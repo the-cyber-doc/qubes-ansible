@@ -1,6 +1,5 @@
 ---
 burp_install_dir: /opt/BurpSuiteCommunity
-burp_proxy_port: 8080
 burp_config_root: "{{ vm_user_home }}/.BurpSuite"
 burp_user_config: "{{ burp_config_root }}/burp-config.json"
 burp_launcher: "{{ burp_config_root }}/start-burp.sh"

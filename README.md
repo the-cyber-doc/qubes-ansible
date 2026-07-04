@@ -42,6 +42,22 @@ vars) or be in the inventory — it cannot live in a vars file.
 and passes every variable whose name starts with `host_` as an `-e` flag before
 forwarding all arguments to `ansible-playbook`.
 
+### `strategy = qubes_proxy`
+
+The `qubes` connection plugin (used for every `appvms`/`templatevms`/`standalonevms`/
+`disp_vms` host) talks to target VMs via `qvm-run`, run by the `ansible-playbook`
+process itself. With Ansible's default `linear` strategy, that means a target qube's
+output is parsed directly inside the controller process — which this project runs
+from Dom0. A compromised or malicious qube could exploit that to reach Dom0.
+
+`qubes_proxy` (set globally in `ansible.cfg`) closes that hole: instead of connecting
+directly, it proxies the connection through a fresh management disposable
+(`disp-mgmt-<template>`) based on the target's own template. A hostile response can
+at most compromise that disposable, not the controller. This requires the
+`qubes.AnsibleVM` qrexec service — installed by the `qubes-ansible-vm` (Fedora) /
+`qubes-ansible` (Debian) package — to be present in every template that will be
+targeted; `base.yml` bootstraps it automatically (see below).
+
 ### `host_` prefix convention
 
 Variables used directly in a `hosts:` pattern are named `host_<feature>_<descriptor>`
@@ -106,7 +122,7 @@ without removing the code.
 ```
 .
 ├── ansible-playbook.sh          # Wrapper — always use this instead of ansible-playbook
-├── ansible.cfg                  # Sets inventory = ./inventory and roles_path = ./roles
+├── ansible.cfg                  # Sets inventory = ./inventory, roles_path = ./roles, strategy = qubes_proxy
 ├── site.yml                     # Top-level entry point; imports all feature playbooks
 │
 ├── inventory/
@@ -425,6 +441,17 @@ re-run at any time against already-running systems.
 # Or directly against the playbook (same effect)
 ./ansible-playbook.sh playbooks/base.yml
 ```
+
+Before touching any template over `connection: qubes`, `base.yml` first bootstraps
+the `qubes-ansible-vm` (Fedora) / `qubes-ansible` (Debian) package into every
+template that doesn't already have it. This package provides the `qubes.AnsibleVM`
+qrexec service that the `qubes_proxy` strategy (see below) needs to proxy a
+connection through a management disposable based on that template. The bootstrap
+itself runs over `connection: local` with raw `qvm-run` — using `connection: qubes`
+here would be circular, since the management disposable it would need is based on
+the very template that doesn't have the service yet. Already-bootstrapped templates
+are skipped (network is only toggled on and the template only shut down for
+templates that actually needed the install).
 
 ### Run everything
 

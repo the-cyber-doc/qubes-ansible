@@ -5,3 +5,4 @@ host_burp_dvm: burp-dvm
 burp_memory: 4000
 burp_maxmem: 4000
 burp_private_storage: 20GB
+burp_proxy_port: 8080

@@ -70,7 +70,7 @@
         vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
         vm_memory: "{{ burp_memory }}"
         vm_maxmem: "{{ burp_maxmem }}"
-        vm_private_storage: "{{ burp_private_storage if app_check.rc != 0 else '' }}"
+        vm_private_storage: "{{ burp_private_storage }}"
 
 - hosts: "{{ host_burp_dvm | default([]) }}"
   become: yes
