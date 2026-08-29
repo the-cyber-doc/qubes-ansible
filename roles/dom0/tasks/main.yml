@@ -20,3 +20,47 @@
     owner: "{{ admin_user }}"
     group: "{{ admin_group }}"
     mode: '0755'
+
+- name: Ensure .local/bin directory exists
+  ansible.builtin.file:
+    path: "{{ admin_home }}/.local/bin"
+    state: directory
+    owner: "{{ admin_user }}"
+    group: "{{ admin_group }}"
+    mode: '0755'
+
+- name: Deploy wm-move script
+  ansible.builtin.copy:
+    src: wm-move.sh
+    dest: "{{ admin_home }}/.local/bin/"
+    owner: "{{ admin_user }}"
+    group: "{{ admin_group }}"
+    mode: '0755'
+
+- name: Get admin user UID
+  ansible.builtin.command: id -u {{ admin_user }}
+  register: wm_move_admin_uid
+  changed_when: false
+
+- name: Configure wm-move keyboard shortcuts
+  become: yes
+  become_user: "{{ admin_user }}"
+  environment:
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ wm_move_admin_uid.stdout }}/bus"
+  community.general.xfconf:
+    channel: xfce4-keyboard-shortcuts
+    property: "/commands/custom/{{ item.key }}"
+    value_type: string
+    value: "{{ admin_home }}/.local/bin/wm-move.sh {{ item.args }}"
+  loop:
+    - { key: "<Super>KP_1", args: "l b" }
+    - { key: "<Super>KP_2", args: "c b" }
+    - { key: "<Super>KP_3", args: "r b" }
+    - { key: "<Super>KP_4", args: "l" }
+    - { key: "<Super>KP_5", args: "c" }
+    - { key: "<Super>KP_6", args: "r" }
+    - { key: "<Super>KP_7", args: "l t" }
+    - { key: "<Super>KP_8", args: "c t" }
+    - { key: "<Super>KP_9", args: "r t" }
+  loop_control:
+    label: "{{ item.key }}"

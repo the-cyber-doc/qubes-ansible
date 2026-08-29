@@ -1,0 +1,33 @@
+---
+- name: Install additional packages
+  ansible.builtin.dnf:
+    name:
+      - libappindicator-gtk3
+      - gnome-shell-extension-appindicator
+      - gnome-extensions-app
+    state: present
+- name: Download Proton repository
+  command:
+    cmd: "curl -L -o /tmp/proton_repo.rpm {{ proton_vpn_repo_url }}"
+- name: Install Proton repository
+  ansible.builtin.command:
+    cmd: dnf install -y /tmp/proton_repo.rpm
+- name: Refresh DNF
+  ansible.builtin.command:
+    cmd: dnf makecache
+- name: Install Proton App
+  ansible.builtin.dnf:
+    name:
+      - proton-vpn-gnome-desktop
+    state: present
+- name: Update DNF
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+- name: Deploy dconf drop-in to enable AppIndicator extension
+  ansible.builtin.copy:
+    src: 00-appindicator
+    dest: /etc/dconf/db/local.d/00-appindicator
+    owner: root
+    group: root
+    mode: "0644"

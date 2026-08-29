@@ -1,0 +1,2 @@
+---
+proton_vpn_repo_url: "https://repo.protonvpn.com/fedora-{{ fedora_version }}-stable/protonvpn-stable-release/protonvpn-stable-release-1.0.4-1.noarch.rpm"

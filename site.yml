@@ -25,3 +25,6 @@
 
 - import_playbook: playbooks/work.yml
   tags: [work]
+
+- import_playbook: playbooks/vpn.yml
+  tags: [vpn]

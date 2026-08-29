@@ -1,0 +1,118 @@
+---
+#
+# Template
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/vpn.yml
+  tasks:
+    - include_tasks: tasks/clone_template.yml
+      vars:
+        clone_src: "{{ vpn_base_template }}"
+        clone_dest: "{{ host_vpn_template }}"
+
+- hosts: "{{ host_vpn_template | default([]) }}"
+  become: yes
+  connection: qubes
+  vars_files:
+    - vars/vpn.yml
+  roles:
+    - role: base_packages
+    - role: vpn_template
+
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/vpn.yml
+  tasks:
+    - name: Shutdown the VPN Template
+      qubesos:
+        guest: "{{ host_vpn_template }}"
+        state: shutdown
+    - name: Remove the network
+      command: qvm-prefs {{ host_vpn_template }} netvm ''
+    - name: Stop here
+      ansible.builtin.meta: end_play
+
+#
+# DVM
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/vpn.yml
+  tasks:
+    - name: Check if DVM exists
+      shell: "qvm-ls --raw-data --fields name | grep -w {{ host_vpn_dvm }}"
+      register: vpn_dvm_check
+      failed_when: false
+      changed_when: false
+    - name: Create DVM
+      command: qvm-create --class AppVM --label blue --template {{ host_vpn_template }} {{ host_vpn_dvm }}
+      when: vpn_dvm_check.rc != 0
+    - name: Set DVM label
+      command: qvm-prefs {{ host_vpn_dvm }} label blue
+    - name: Set DVM network
+      command: qvm-prefs {{ host_vpn_dvm }} netvm {{ netvm_native }}
+    - name: Set as DispVM template
+      command: qvm-prefs {{ host_vpn_dvm }} template_for_dispvms true
+    - include_role:
+        name: set_prefs
+        apply:
+          tags: [prefs, vpn]
+      tags: [prefs]
+      vars:
+        target_vm: "{{ host_vpn_dvm }}"
+        vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
+        vm_vcpus: "{{ vpn_vcpus }}"
+
+- hosts: "{{ host_vpn_dvm | default([]) }}"
+  become: yes
+  connection: qubes
+  vars_files:
+    - vars/vpn.yml
+  roles:
+    - role: vpn_dvm
+
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/vpn.yml
+  tasks:
+    - name: Shutdown the VPN DVM
+      qubesos:
+        guest: "{{ host_vpn_dvm }}"
+        state: shutdown
+
+#
+# DispVM
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/vpn.yml
+  tasks:
+    - name: Check if DispVM exists
+      shell: "qvm-ls --raw-data --fields name | grep -w {{ vpn_dispvm }}"
+      register: vpn_dispvm_check
+      failed_when: false
+      changed_when: false
+    - name: Create DispVM
+      command: qvm-create --class DispVM --label red --template {{ host_vpn_dvm }} {{ vpn_dispvm }}
+      when: vpn_dispvm_check.rc != 0
+    - name: Set default DVM
+      command: qvm-prefs {{ vpn_dispvm }} default_dispvm {{ host_vpn_dvm }}
+    - name: Set label
+      command: qvm-prefs {{ vpn_dispvm }} label red
+    - name: Set network
+      command: qvm-prefs {{ vpn_dispvm }} netvm {{ netvm_native }}
+    - include_role:
+        name: set_prefs
+        apply:
+          tags: [prefs, vpn]
+      tags: [prefs]
+      vars:
+        target_vm: "{{ vpn_dispvm }}"
+        vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
+        vm_vcpus: "{{ vpn_vcpus }}"
