@@ -1,0 +1,5 @@
+---
+open_with_base_template: "{{ ubuntu_version_latest }}"
+host_open_with_template: "open_with-template-{{ open_with_base_template }}"
+host_open_with_dvm: open_with-dvm
+open_with_dispvm: open_with-disp

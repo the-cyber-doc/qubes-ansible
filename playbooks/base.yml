@@ -43,7 +43,7 @@
       when: item.rc != 0
       tags: [qubes-ansible-vm]
 
-- hosts: "templatevms:standalonevms:!windows_vms"
+- hosts: "templatevms"
   connection: qubes
   gather_facts: false
   tasks:
@@ -51,11 +51,6 @@
       ansible.builtin.setup:
   roles:
     - role: base_packages
-    - role: firefox
-      vars:
-        firefox_extra_extensions:
-          - fireshot
-          - print_edit_we
 
 - hosts: local
   connection: local

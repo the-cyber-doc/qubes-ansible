@@ -11,7 +11,7 @@
 
 - name: Install base packages (Debian)
   apt:
-    name: "{{ base_packages + base_packages_extra }}"
+    name: "{{ base_packages + base_packages_extra + base_packages_playbook_extra }}"
     state: present
   become: yes
   when: ansible_os_family == 'Debian'
@@ -25,7 +25,7 @@
 
 - name: Install base packages (RedHat)
   dnf:
-    name: "{{ base_packages + base_packages_extra }}"
+    name: "{{ base_packages + base_packages_extra + base_packages_playbook_extra }}"
     state: present
   become: yes
   when: ansible_os_family == 'RedHat'

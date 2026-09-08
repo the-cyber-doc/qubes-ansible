@@ -1,0 +1,20 @@
+---
+- name: Get VM user UID
+  ansible.builtin.command: id -u {{ vm_user }}
+  register: xfce_vm_user_uid
+  changed_when: false
+
+- name: Configure Thunar preferences
+  become: yes
+  become_user: "{{ vm_user }}"
+  environment:
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ xfce_vm_user_uid.stdout }}/bus"
+  community.general.xfconf:
+    channel: thunar
+    property: "{{ item.property }}"
+    value_type: "{{ item.value_type }}"
+    value: "{{ item.value }}"
+  loop:
+    - { property: "/last-show-hidden", value_type: "bool", value: true }
+    - { property: "/misc-thumbnail-mode", value_type: "string", value: "THUNAR_THUMBNAIL_MODE_ONLY_LOCAL" }
+    - { property: "/last-image-preview-visible", value_type: "bool", value: true }

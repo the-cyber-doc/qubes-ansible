@@ -34,3 +34,15 @@ debian_version: 13
 
 # Fedora base version for template
 fedora_version: 44
+
+# Ubuntu base version for template
+ubuntu_version: resolute
+
+# Debian latest version for templates
+debian_version_latest: 14
+
+# Fedora latest version for template
+fedora_version_latest: 44
+
+# Ubuntu latest version for template
+ubuntu_version_latest: resolute

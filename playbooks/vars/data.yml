@@ -1,0 +1,36 @@
+---
+base_template: "debian-{{ debian_version }}-xfce"
+host_data_template: "data-template-{{ base_template }}"
+host_data_app: data-app
+system_storage: 100GiB
+private_storage: 50GiB
+vcpus: 6
+label: black
+packages:
+  - atril
+  - calibre
+  - digikam
+  - emacs
+  - ffmpeg
+  - filezilla
+  - ghostscript
+  - gimp
+  - heif-gdk-pixbuf
+  - imagemagick
+  - inkscape
+  - jhead
+  - keepassxc
+  - libimage-exiftool-perl
+  - libjxl-gdk-pixbuf
+  - libreoffice-calc
+  - libreoffice-draw
+  - libreoffice-writer
+  - mkvtoolnix
+  - nextcloud-desktop
+  - okular
+  - pdfarranger
+  - picard
+  - rename
+  - tumbler-plugins-extra
+  - vlc
+  - xournalpp

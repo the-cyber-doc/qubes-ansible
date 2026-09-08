@@ -5,3 +5,7 @@ base_packages:
   - vim
 
 base_packages_extra: []
+
+# Set from the playbook calling this role, so it merges with (rather than
+# overrides) the OS-specific base_packages_extra loaded from vars/*.yml.
+base_packages_playbook_extra: []
