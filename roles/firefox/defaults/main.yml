@@ -36,3 +36,8 @@ firefox_proxy: ""
 # Name (from profiles.ini) of the profile Firefox launchers are forced to use, so
 # the desktop entry honours the skel profile instead of a per-install dedicated one.
 firefox_profile_name: default
+
+firefox_packages_debian:
+  - firefox-esr
+firefox_packages_redhat:
+  - firefox

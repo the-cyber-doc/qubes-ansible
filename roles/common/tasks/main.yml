@@ -1,0 +1,8 @@
+---
+# Shared task files for other roles, called with include_role + tasks_from:
+#   packages.yml → install packages (apt/dnf by OS family)
+#   vm_type.yml  → detect the Qubes VM type for type-aware roles
+# Listing this role does nothing by itself. Every play that runs inside a VM
+# lists `- role: common` first so the qubes_proxy strategy copies it to the
+# management DispVM: it only copies roles listed in the play's `roles:`, never
+# playbooks/tasks/ files, role dependencies or roles pulled in by include_role.

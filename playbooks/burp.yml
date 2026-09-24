@@ -18,8 +18,10 @@
   vars_files:
     - vars/burp.yml
   roles:
+    - role: common
     - role: base_packages
-    - role: burp_template
+    - role: burp
+    - role: jdownloader2
     - role: firefox
       vars:
         firefox_proxy: "127.0.0.1:{{ burp_proxy_port }}"
@@ -78,7 +80,9 @@
   vars_files:
     - vars/burp.yml
   roles:
-    - role: burp_dvm
+    - role: common
+    - role: burp
+    - role: jdownloader2
 
 - hosts: local
   connection: local

@@ -18,8 +18,9 @@
   vars_files:
     - vars/ocr.yml
   roles:
+    - role: common
     - role: base_packages
-    - role: ocr_template
+    - role: ocr
 
 - hosts: local
   connection: local
@@ -71,7 +72,8 @@
     - vars/ocr.yml
     - vars/llm.yml
   roles:
-    - role: ocr_dvm
+    - role: common
+    - role: ocr
 
 - hosts: local
   connection: local

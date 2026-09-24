@@ -31,9 +31,10 @@
   vars_files:
     - vars/data.yml
   roles:
+    - role: common
     - role: base_packages
       vars:
-        base_packages_playbook_extra: "{{ packages }}"
+        base_packages_playbook_extra: "{{ data_packages }}"
     - role: firefox
       vars:
         firefox_extra_extensions:
@@ -86,7 +87,19 @@
 - hosts: "{{ host_data_app | default([]) }}"
   connection: qubes
   roles:
+    - role: common
     - role: xfce
+
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/data.yml
+  tasks:
+    - include_role:
+        name: appsmenu
+      vars:
+        appsmenu_target_vm: "{{ host_data_app }}"
+        appsmenu_whitelist: "{{ data_appsmenu_whitelist }}"
 
 - hosts: local
   connection: local

@@ -18,8 +18,9 @@
   vars_files:
     - vars/vpn.yml
   roles:
+    - role: common
     - role: base_packages
-    - role: vpn_template
+    - role: vpn
 
 - hosts: local
   connection: local
@@ -73,7 +74,8 @@
   vars_files:
     - vars/vpn.yml
   roles:
-    - role: vpn_dvm
+    - role: common
+    - role: vpn
 
 - hosts: local
   connection: local

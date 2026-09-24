@@ -1,0 +1,10 @@
+---
+proton_vpn_repo_url: "https://repo.protonvpn.com/fedora-{{ fedora_version }}-stable/protonvpn-stable-release/protonvpn-stable-release-1.0.4-1.noarch.rpm"
+
+vpn_packages_redhat:
+  - libappindicator-gtk3
+  - gnome-shell-extension-appindicator
+  - gnome-extensions-app
+# Installed after the Proton repository is added
+vpn_proton_packages_redhat:
+  - proton-vpn-gnome-desktop

@@ -1,31 +1,10 @@
 ---
-- name: Load OS-specific package variables
-  include_vars: "{{ ansible_os_family }}.yml"
-
-- name: Update system (Debian)
-  apt:
-    upgrade: dist
-    update_cache: yes
-  become: yes
-  when: ansible_os_family == 'Debian'
-
-- name: Install base packages (Debian)
-  apt:
-    name: "{{ base_packages + base_packages_extra + base_packages_playbook_extra }}"
-    state: present
-  become: yes
-  when: ansible_os_family == 'Debian'
-
-- name: Update system (RedHat)
-  dnf:
-    name: "*"
-    state: latest
-  become: yes
-  when: ansible_os_family == 'RedHat'
-
-- name: Install base packages (RedHat)
-  dnf:
-    name: "{{ base_packages + base_packages_extra + base_packages_playbook_extra }}"
-    state: present
-  become: yes
-  when: ansible_os_family == 'RedHat'
+- name: Upgrade system and install base packages
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_upgrade: true
+    packages_all: "{{ base_packages + base_packages_playbook_extra }}"
+    packages_debian: "{{ base_packages_debian }}"
+    packages_redhat: "{{ base_packages_redhat }}"

@@ -24,7 +24,7 @@ Specifically it automates:
 - **Messaging** — Signal, WhatsApp (Whatsie), and Chrome in an isolated Fedora AppVM
 - **Burp** — a disposable web-testing VM: Burp Suite Community auto-starts its proxy and
   Firefox is pre-configured to route its traffic through Burp; a fresh disposable is spawned
-  on every launch
+  on every launch; JDownloader 2 is also installed
 - **Base packages** — `htop` and `tmux` on every Linux template and standalone VM
 
 ---
@@ -104,10 +104,10 @@ loads `vars/sys_gpu.yml` to get the GPU PCI IDs. The OCR DVM play loads
 ### Windows exclusion
 
 Windows VMs are listed in an explicit `windows_vms` inventory group. Any play that
-must skip Windows uses the `:!windows_vms` host pattern exclusion. The `base_packages`
-role also guards every task with `when: ansible_os_family == 'Debian'` or
-`when: ansible_os_family == 'RedHat'`, so it is harmless even if a Windows host
-is accidentally targeted.
+must skip Windows uses the `:!windows_vms` host pattern exclusion. All package
+installs go through `roles/common/tasks/packages.yml`, which guards every task with
+`when: ansible_os_family == 'Debian'` or `when: ansible_os_family == 'RedHat'`, so
+they are harmless even if a Windows host is accidentally targeted.
 
 ### Disabled tasks
 
@@ -135,7 +135,7 @@ without removing the code.
 │   ├── ocr.yml                  # OCR stack: template → DVM → DispVM → networking
 │   ├── sys_gpu.yml              # sys-gpu: template → DVM → DispVM
 │   ├── messenging.yml           # Messaging: template packages + AppVM autostart
-│   ├── burp.yml                 # Burp: template (Burp + Firefox proxy) → disposable template
+│   ├── burp.yml                 # Burp: template (Burp + JDownloader 2 + Firefox proxy) → disposable template
 │   │
 │   ├── group_vars/
 │   │   └── all.yml              # Global vars: paths, netvm, debian_version
@@ -148,23 +148,24 @@ without removing the code.
 │   │   └── burp.yml             # host_burp_template, host_burp_dvm, burp_dispvm, burp_proxy_port …
 │   │
 │   └── tasks/
-│       └── clone_template.yml         # Reusable: clone + set netvm + set qrexec_timeout
+│       └── clone_template.yml         # Reusable (Dom0 plays only): clone + set netvm + set qrexec_timeout
 │
 └── roles/
+    ├── common/                  # Shared tasks, listed first in every VM play: packages.yml (apt/dnf install), vm_type.yml (type-aware roles)
     ├── base_packages/           # htop + tmux + ... on any Linux VM (apt or dnf via ansible_os_family)
     ├── llm_template/            # NVIDIA drivers, CUDA, Ollama service + systemd overrides
     ├── llm_dvm_1/               # Qubes bind-dirs for /usr/share/ollama (model persistence)
     ├── llm_dvm_2/               # Pull Ollama models; create custom 32k/8k context variants
-    ├── ocr_template/            # Python3 + venv tooling
-    ├── ocr_dvm/                 # Clone local-llm-pdf-ocr, UV venv, .env, start.sh, rc.local
-    ├── sys_gpu_template/        # NVIDIA drivers + CUDA (no Ollama)
-    ├── sys_gpu_dvm/             # Empty — no additional DVM config needed
+    ├── ocr/                     # Type-aware: Python3 + venv tooling (template); local-llm-pdf-ocr, UV venv, .env, start.sh, rc.local (DVM)
+    ├── sys_gpu/                 # Type-aware: NVIDIA drivers + CUDA, no Ollama (template); nothing (DVM)
     ├── secureboot/              # sbctl backup/restore scripts + kernel install hook
     ├── messenging/              # Chrome, Snap, Signal, Whatsie; autostart symlinks
-    ├── burp_template/           # Installs Burp Suite Community + Firefox cert tooling (certutil)
-    ├── burp_dvm/                # Burp proxy config + autostart session script (start Burp → trust CA → open Firefox)
+    ├── burp/                    # Type-aware: Burp Suite Community + Firefox cert tooling (template); proxy config + autostart session script (DVM)
+    ├── vpn/                     # Type-aware: Proton VPN app + AppIndicator extension (template); bind-dirs entry (DVM)
     ├── firefox/                 # Firefox install, policies, and skel profile
-    └── set_prefs/               # Reusable: set qrexec_timeout / maxmem / memory / vcpus on any VM
+    ├── jdownloader2/            # Type-aware: Java in the template; JDownloader 2 into ~/jd2 + desktop entry in the AppVM/DVM
+    ├── set_prefs/               # Reusable: set qrexec_timeout / maxmem / memory / vcpus on any VM
+    └── appsmenu/                # Reusable: set a VM's App Menu whitelist via qvm-appmenus --set-whitelist
 ```
 
 

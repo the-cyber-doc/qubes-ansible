@@ -1,6 +1,8 @@
 ---
 - name: Install Packages
-  ansible.builtin.apt:
-    name: "{{ packages }}"
-    state: present
-    update_cache: true
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_update_cache: true
+    packages_debian: "{{ work_packages_debian }}"

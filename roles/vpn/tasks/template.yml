@@ -1,0 +1,28 @@
+---
+# Runs in the TemplateVM (selected by main.yml).
+- name: Install additional packages
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_redhat: "{{ vpn_packages_redhat }}"
+- name: Download Proton repository
+  command:
+    cmd: "curl -L -o /tmp/proton_repo.rpm {{ proton_vpn_repo_url }}"
+- name: Install Proton repository
+  ansible.builtin.command:
+    cmd: dnf install -y /tmp/proton_repo.rpm
+- name: Upgrade system and install Proton App
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_upgrade: true
+    packages_redhat: "{{ vpn_proton_packages_redhat }}"
+- name: Deploy dconf drop-in to enable AppIndicator extension
+  ansible.builtin.copy:
+    src: 00-appindicator
+    dest: /etc/dconf/db/local.d/00-appindicator
+    owner: root
+    group: root
+    mode: "0644"

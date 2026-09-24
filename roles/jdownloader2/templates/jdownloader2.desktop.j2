@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=JDownloader 2
+Comment=Download manager
+Exec=java -jar {{ jdownloader2_install_dir }}/JDownloader.jar
+{% if jdownloader2_icon.stat.exists %}
+Icon={{ jdownloader2_icon.stat.path }}
+{% endif %}
+Terminal=false
+Categories=Network;FileTransfer;
+StartupWMClass=org-jdownloader-update-launcher-JDLauncher

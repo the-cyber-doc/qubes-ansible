@@ -1,0 +1,14 @@
+---
+# The official Linux installers are only hosted on mega.nz (not scriptable), so the
+# role uses JDownloader's own bootstrap JAR, which downloads the full application.
+jdownloader2_jar_url: "http://installer.jdownloader.org/JDownloader.jar"
+jdownloader2_install_dir: "{{ vm_user_home }}/jd2"
+jdownloader2_desktop_file: "{{ vm_user_home }}/.local/share/applications/jdownloader2.desktop"
+# Maximum time (seconds) per headless install pass (see files/install-jdownloader2.sh)
+jdownloader2_bootstrap_timeout: 900
+
+# Java runtime, installed in the template (template.yml)
+jdownloader2_packages_debian:
+  - default-jre
+jdownloader2_packages_redhat:
+  - java-latest-openjdk

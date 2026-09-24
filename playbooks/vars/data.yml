@@ -6,7 +6,104 @@ system_storage: 100GiB
 private_storage: 50GiB
 vcpus: 6
 label: black
-packages:
+data_appsmenu_whitelist:
+  - org.xfce.mousepad-settings.desktop
+  - libreoffice-calc.desktop
+  - systemsettings.desktop
+  - synaptic.desktop
+  - vim.desktop
+  - thunar-volman-settings.desktop
+  - xfce4-about.desktop
+  - calibre-ebook-viewer.desktop
+  - xfce4-notifyd-config.desktop
+  - calibre-ebook-edit.desktop
+  - xfce4-color-settings.desktop
+  - xfce-keyboard-settings.desktop
+  - calibre-gui.desktop
+  - libreoffice-startcenter.desktop
+  - libreoffice-impress.desktop
+  - org.kde.okular.desktop
+  - xfce4-appfinder.desktop
+  - debian-uxterm.desktop
+  - xarchiver.desktop
+  - system-config-printer.desktop
+  - org.gnome.Terminal.desktop
+  - xfce-display-settings.desktop
+  - xfce4-web-browser.desktop
+  - org.xfce.mousepad.desktop
+  - xfce-session-settings.desktop
+  - calibre-lrfviewer.desktop
+  - xfce-mouse-settings.desktop
+  - xfce4-taskmanager.desktop
+  - xfce-wm-settings.desktop
+  - emacs.desktop
+  - emacs-term.desktop
+  - libreoffice-math.desktop
+  - xfce4-session-logout.desktop
+  - xfce-workspaces-settings.desktop
+  - com.github.jeromerobert.pdfarranger.desktop
+  - xfce4-power-manager-settings.desktop
+  - xfce4-file-manager.desktop
+  - xfce-wmtweaks-settings.desktop
+  - libreoffice-draw.desktop
+  - xfce4-terminal-settings.desktop
+  - mate-notification-properties.desktop
+  - nm-connection-editor.desktop
+  - xfce4-terminal-emulator.desktop
+  - org.kde.kdeconnect.nonplasma.desktop
+  - firefox-esr.desktop
+  - xfburn.desktop
+  - xfce4-dict.desktop
+  - yelp.desktop
+  - qubes-run-terminal.desktop
+  - xfce4-terminal.desktop
+  - emacsclient.desktop
+  - xfce4-run.desktop
+  - kdesystemsettings.desktop
+  - vlc.desktop
+  - org.kde.kdeconnect.app.desktop
+  - org.keepassxc.KeePassXC.desktop
+  - xfce4-sensors.desktop
+  - texdoctk.desktop
+  - gimp.desktop
+  - debian-xterm.desktop
+  - org.inkscape.Inkscape.desktop
+  - org.xfce.ristretto.desktop
+  - qubes-start.desktop
+  - xfce4-clipman.desktop
+  - qubes-open-file-manager.desktop
+  - xfce4-settings-editor.desktop
+  - xfce4-notes.desktop
+  - thunar-settings.desktop
+  - filezilla.desktop
+  - org.kde.kdeconnect.sms.desktop
+  - xfce-settings-manager.desktop
+  - xfce4-mail-reader.desktop
+  - atril.desktop
+  - org.pulseaudio.pavucontrol.desktop
+  - libreoffice-writer.desktop
+  - xfce4-accessibility-settings.desktop
+  - org.xfce.Parole.desktop
+  - xfce-ui-settings.desktop
+  - panel-preferences.desktop
+  - com.nextcloud.desktopclient.nextcloud.desktop
+  - org.musicbrainz.Picard.desktop
+  - htop.desktop
+  - org.kde.digikam.desktop
+  - xfce4-screenshooter.desktop
+  - org.kde.kdeconnect-settings.desktop
+  - io.github.quodlibet.ExFalso.desktop
+  - xfce4-clipman-settings.desktop
+  - thunar-bulk-rename.desktop
+  - com.github.xournalpp.xournalpp.desktop
+  - thunar.desktop
+  - thunderbird.desktop
+  - io.github.quodlibet.QuodLibet.desktop
+  - xsane.desktop
+  - xfce-backdrop-settings.desktop
+  - xfce4-mime-settings.desktop
+
+data_packages:
   - atril
   - calibre
   - digikam
@@ -28,6 +125,7 @@ packages:
   - mkvtoolnix
   - nextcloud-desktop
   - okular
+  - parallel
   - pdfarranger
   - picard
   - rename

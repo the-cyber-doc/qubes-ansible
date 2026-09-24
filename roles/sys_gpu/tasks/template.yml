@@ -1,0 +1,15 @@
+---
+# Runs in the TemplateVM (selected by main.yml).
+- name: Download Nvidia repositories
+  command:
+    cmd: "curl -L -o /tmp/cuda-repo.deb {{ nvidia_cuda_url }}"
+- name: Install Nvidia repositories
+  command:
+    cmd: dpkg -i /tmp/cuda-repo.deb
+- name: Upgrade system and install Nvidia drivers
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_upgrade: true
+    packages_debian: "{{ sys_gpu_nvidia_packages_debian }}"

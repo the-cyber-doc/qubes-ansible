@@ -1,0 +1,7 @@
+---
+nvidia_cuda_url: "https://developer.download.nvidia.com/compute/cuda/repos/debian{{ debian_version }}/x86_64/cuda-keyring_1.1-1_all.deb"
+
+# Installed after the CUDA repository is added
+sys_gpu_nvidia_packages_debian:
+  - nvidia-driver-cuda
+  - nvidia-kernel-dkms

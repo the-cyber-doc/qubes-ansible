@@ -1,27 +1,23 @@
 ---
 - name: Install additional packages
-  ansible.builtin.apt:
-    name:
-      - passwd
-      - htop
-      - nvtop
-    state: present
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_debian: "{{ llm_template_packages_debian }}"
 - name: Download Nvidia repositories
   command:
     cmd: "curl -L -o /tmp/cuda-repo.deb {{ nvidia_cuda_url }}"
 - name: Install Nvidia repositories
   command:
     cmd: dpkg -i /tmp/cuda-repo.deb
-- name: Update APT
-  ansible.builtin.apt:
-    upgrade: "dist"
-    update_cache: true
-- name: Install Nvidia drivers
-  ansible.builtin.apt:
-    name:
-      - nvidia-driver-cuda
-      - nvidia-kernel-dkms
-    state: present
+- name: Upgrade system and install Nvidia drivers
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_upgrade: true
+    packages_debian: "{{ llm_template_nvidia_packages_debian }}"
 - name: Create the ollama group
   ansible.builtin.group:
     name: ollama

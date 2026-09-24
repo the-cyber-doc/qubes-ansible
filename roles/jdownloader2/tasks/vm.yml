@@ -1,0 +1,58 @@
+---
+# Runs in the AppVM/DVM whose home should hold JDownloader: a template's home is
+# not copied into its AppVMs, so this cannot run in the template. Selected by main.yml.
+- name: Create JDownloader 2 install directory
+  ansible.builtin.file:
+    path: "{{ jdownloader2_install_dir }}"
+    state: directory
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0755'
+
+# Only download when no launcher exists: the first install run replaces
+# JDownloader.jar with an updated launcher matching Core.jar, and restoring the
+# bootstrap one breaks the GUI (MalformedParameterizedTypeException at startup).
+# get_url alone would re-download it on every run: the server ignores
+# If-Modified-Since and always answers 200.
+- name: Check for an existing JDownloader 2 launcher
+  ansible.builtin.stat:
+    path: "{{ jdownloader2_install_dir }}/JDownloader.jar"
+  register: jdownloader2_launcher
+
+- name: Download JDownloader 2 bootstrap JAR
+  ansible.builtin.get_url:
+    url: "{{ jdownloader2_jar_url }}"
+    dest: "{{ jdownloader2_install_dir }}/JDownloader.jar"
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0644'
+  when: not jdownloader2_launcher.stat.exists
+
+# Unattended install: repeated headless runs until Core.jar exists (see the script).
+- name: Install JDownloader 2 (headless bootstrap)
+  ansible.builtin.script:
+    cmd: "install-jdownloader2.sh {{ jdownloader2_install_dir }} {{ jdownloader2_bootstrap_timeout }}"
+    creates: "{{ jdownloader2_install_dir }}/Core.jar"
+  become: yes
+  become_user: "{{ vm_user }}"
+
+- name: Look for the JDownloader 2 icon
+  ansible.builtin.stat:
+    path: "{{ jdownloader2_install_dir }}/themes/standard/org/jdownloader/images/logo/jd_logo_128_128.png"
+  register: jdownloader2_icon
+
+- name: Ensure applications directory exists
+  ansible.builtin.file:
+    path: "{{ vm_user_home }}/.local/share/applications"
+    state: directory
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0755'
+
+- name: Install JDownloader 2 desktop entry
+  ansible.builtin.template:
+    src: jdownloader2.desktop.j2
+    dest: "{{ jdownloader2_desktop_file }}"
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: '0644'

@@ -18,8 +18,9 @@
   vars_files:
     - vars/sys_gpu.yml
   roles:
+    - role: common
     - role: base_packages
-    - role: sys_gpu_template
+    - role: sys_gpu
 
 - hosts: local
   connection: local

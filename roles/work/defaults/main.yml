@@ -1,3 +1,3 @@
 ---
-packages:
+work_packages_debian:
   - tryton-server-all-in-one

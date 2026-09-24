@@ -4,8 +4,11 @@ base_packages:
   - tmux
   - vim
 
-base_packages_extra: []
+base_packages_debian:
+  - 7zip
 
-# Set from the playbook calling this role, so it merges with (rather than
-# overrides) the OS-specific base_packages_extra loaded from vars/*.yml.
+base_packages_redhat:
+  - "{{ '7zip' if ansible_distribution_major_version | int >= 44 else '7z' }}"
+
+# Set from the playbook calling this role to add packages to every OS family.
 base_packages_playbook_extra: []

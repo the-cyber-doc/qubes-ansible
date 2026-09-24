@@ -1,0 +1,23 @@
+---
+# Reads the Qubes VM type and sets facts used by type-aware roles (see CLAUDE.md):
+#   vm_type                → TemplateVM | AppVM | DispVM | StandaloneVM
+#   vm_run_template_tasks  → run the role's template.yml (system-wide parts)
+#   vm_run_vm_tasks        → run the role's vm.yml (user-home parts)
+# A StandaloneVM has its own root and home volumes, so it gets both.
+# Use: include_role: {name: common, tasks_from: vm_type}
+- name: Read Qubes VM type
+  ansible.builtin.command:
+    cmd: qubesdb-read /type
+  register: _vm_type
+  changed_when: false
+
+- name: Fail on unsupported VM type
+  ansible.builtin.fail:
+    msg: "Unsupported Qubes VM type '{{ _vm_type.stdout }}'"
+  when: _vm_type.stdout not in ['TemplateVM', 'AppVM', 'DispVM', 'StandaloneVM']
+
+- name: Set VM type facts
+  ansible.builtin.set_fact:
+    vm_type: "{{ _vm_type.stdout }}"
+    vm_run_template_tasks: "{{ _vm_type.stdout in ['TemplateVM', 'StandaloneVM'] }}"
+    vm_run_vm_tasks: "{{ _vm_type.stdout in ['AppVM', 'DispVM', 'StandaloneVM'] }}"

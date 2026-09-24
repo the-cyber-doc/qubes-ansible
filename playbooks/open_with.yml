@@ -18,6 +18,7 @@
   vars_files:
     - vars/open-with.yml
   roles:
+    - role: common
     - role: base_packages
     - role: open-with_template
 
@@ -73,6 +74,7 @@
   vars_files:
     - vars/open-with.yml
   roles:
+    - role: common
     - role: open-with_dvm_1
 
 - hosts: local
@@ -101,6 +103,7 @@
   vars_files:
     - vars/open-with.yml
   roles:
+    - role: common
     - role: open-with_dvm_2
 
 - hosts: local

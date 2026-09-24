@@ -1,17 +1,11 @@
 ---
-- name: Install Firefox (Debian)
-  ansible.builtin.apt:
-    name: firefox-esr
-    state: present
-  become: yes
-  when: ansible_os_family == 'Debian'
-
-- name: Install Firefox (RedHat)
-  ansible.builtin.dnf:
-    name: firefox
-    state: present
-  become: yes
-  when: ansible_os_family == 'RedHat'
+- name: Install Firefox
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_debian: "{{ firefox_packages_debian }}"
+    packages_redhat: "{{ firefox_packages_redhat }}"
 
 - name: Set Firefox distribution path
   ansible.builtin.set_fact:

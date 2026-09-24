@@ -1,0 +1,52 @@
+---
+# Installs packages on a Linux VM: apt on Debian, dnf on RedHat; any other OS family
+# (e.g. Windows) is skipped. Needs gathered facts (ansible_os_family). Inputs, all optional:
+#   packages_all           package names identical on every OS family
+#   packages_debian        Debian-only package names
+#   packages_redhat        RedHat-only package names
+#   packages_update_cache  refresh the package cache before installing (default false)
+#   packages_upgrade       upgrade the whole system before installing (default false)
+# Roles keep their lists in defaults/main.yml as <role>_packages[_debian|_redhat].
+# Use: include_role: {name: common, tasks_from: packages} with the inputs as vars.
+- name: Install packages
+  become: true
+  vars:
+    _packages: >-
+      {{ (packages_all | default([]))
+         + (packages_debian | default([]) if ansible_os_family == 'Debian' else [])
+         + (packages_redhat | default([]) if ansible_os_family == 'RedHat' else []) }}
+  block:
+    - name: Upgrade system (Debian)
+      ansible.builtin.apt:
+        upgrade: dist
+        update_cache: true
+      when:
+        - ansible_os_family == 'Debian'
+        - packages_upgrade | default(false) | bool
+
+    - name: Upgrade system (RedHat)
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+      when:
+        - ansible_os_family == 'RedHat'
+        - packages_upgrade | default(false) | bool
+
+    - name: Install packages (Debian)
+      ansible.builtin.apt:
+        name: "{{ _packages }}"
+        state: present
+        update_cache: "{{ packages_update_cache | default(false) | bool }}"
+      when:
+        - ansible_os_family == 'Debian'
+        - _packages | length > 0
+
+    - name: Install packages (RedHat)
+      ansible.builtin.dnf:
+        name: "{{ _packages }}"
+        state: present
+        update_cache: "{{ packages_update_cache | default(false) | bool }}"
+      when:
+        - ansible_os_family == 'RedHat'
+        - _packages | length > 0

@@ -18,6 +18,7 @@
   vars_files:
     - vars/work.yml
   roles:
+    - role: common
     - role: base_packages
     - role: work
 

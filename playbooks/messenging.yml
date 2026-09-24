@@ -5,6 +5,7 @@
   vars_files:
     - vars/messenging.yml
   roles:
+    - role: common
     - role: base_packages
 
 - hosts: local
@@ -26,28 +27,25 @@
   connection: qubes
   vars_files:
     - vars/messenging.yml
+  roles:
+    - role: common
   tasks:
     - name: Install third party repositories
-      become: yes
-      dnf:
-        name: fedora-workstation-repositories
-        state: present
+      include_role:
+        name: common
+        tasks_from: packages
+      vars:
+        packages_redhat: "{{ messenging_repo_packages_redhat }}"
     - name: Enable Google Chrome repository
       become: yes
       command:
         cmd: dnf config-manager setopt google-chrome.enabled=1
-    - name: Install Chrome (used for Teams)
-      become: yes
-      dnf:
-        name: google-chrome-stable
-        state: present
-    - name: Install SNAP
-      become: yes
-      dnf:
-        name:
-          - snapd
-          - qubes-snapd-helper
-        state: present
+    - name: Install Chrome (used for Teams) and SNAP
+      include_role:
+        name: common
+        tasks_from: packages
+      vars:
+        packages_redhat: "{{ messenging_packages_redhat }}"
     - name: Create SNAP Symlink
       become: yes
       file:

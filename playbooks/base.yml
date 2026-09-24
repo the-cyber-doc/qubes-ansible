@@ -50,6 +50,7 @@
     - name: Gather facts
       ansible.builtin.setup:
   roles:
+    - role: common
     - role: base_packages
 
 - hosts: local

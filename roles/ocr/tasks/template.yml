@@ -1,0 +1,9 @@
+---
+# Runs in the TemplateVM (selected by main.yml).
+- name: Upgrade system and install Python tooling
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_upgrade: true
+    packages_debian: "{{ ocr_packages_debian }}"

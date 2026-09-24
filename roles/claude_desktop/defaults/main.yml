@@ -1,0 +1,4 @@
+---
+# Installed after the claude-desktop-debian repository is added
+claude_desktop_packages_debian:
+  - claude-desktop

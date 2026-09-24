@@ -3,3 +3,10 @@ messenging_base_template: fedora-43-xfce
 host_messenging_template: fedora-43-xfce-messenging
 host_messenging_vm: messenging
 messenging_netvm: disp-sys-vpn-proton-ch
+messenging_repo_packages_redhat:
+  - fedora-workstation-repositories
+# Installed after the Google Chrome repository is enabled
+messenging_packages_redhat:
+  - google-chrome-stable
+  - snapd
+  - qubes-snapd-helper

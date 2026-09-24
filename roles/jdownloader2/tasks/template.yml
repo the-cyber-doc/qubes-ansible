@@ -1,0 +1,10 @@
+---
+# Runs in the template: the Java runtime lives on the root volume. The application
+# itself goes into the user's home (see vm.yml). Selected by main.yml.
+- name: Install Java runtime
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_debian: "{{ jdownloader2_packages_debian }}"
+    packages_redhat: "{{ jdownloader2_packages_redhat }}"
