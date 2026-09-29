@@ -1,4 +1,17 @@
 ---
+#
+# Template
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/messenging.yml
+  tasks:
+    - include_tasks: tasks/clone_template.yml
+      vars:
+        clone_src: "{{ messenging_base_template }}"
+        clone_dest: "{{ host_messenging_template }}"
+
 - hosts: "{{ host_messenging_template }}"
   become: yes
   connection: qubes
@@ -7,99 +20,125 @@
   roles:
     - role: common
     - role: base_packages
+  tasks:
+    - name: Install gnupg and SNAP
+      ansible.builtin.include_role:
+        name: common
+        tasks_from: packages
+      vars:
+        packages_update_cache: true
+        packages_upgrade: true
+        packages_debian: "{{ messenging_packages_debian }}"
+    - name: Download Signal signing key
+      ansible.builtin.get_url:
+        url: "{{ messenging_signal_key_url }}"
+        dest: /tmp/signal-desktop-keys.asc
+        mode: "0644"
+    - name: Install Signal signing key
+      ansible.builtin.command:
+        cmd: "gpg --dearmor --yes -o {{ messenging_signal_keyring }} /tmp/signal-desktop-keys.asc"
+        creates: "{{ messenging_signal_keyring }}"
+    - name: Add Signal repository
+      ansible.builtin.get_url:
+        url: "{{ messenging_signal_sources_url }}"
+        dest: /etc/apt/sources.list.d/signal-desktop.sources
+        mode: "0644"
+    - name: Download Google Chrome signing key
+      ansible.builtin.get_url:
+        url: "{{ messenging_chrome_key_url }}"
+        dest: /tmp/google-chrome-key.asc
+        mode: "0644"
+    - name: Install Google Chrome signing key
+      ansible.builtin.command:
+        cmd: "gpg --dearmor --yes -o {{ messenging_chrome_keyring }} /tmp/google-chrome-key.asc"
+        creates: "{{ messenging_chrome_keyring }}"
+    - name: Add Google Chrome repository
+      ansible.builtin.copy:
+        content: "deb [arch=amd64 signed-by={{ messenging_chrome_keyring }}] https://dl.google.com/linux/chrome/deb/ stable main\n"
+        dest: /etc/apt/sources.list.d/google-chrome.list
+        mode: "0644"
+    - name: Install Signal and Chrome (used for Teams)
+      ansible.builtin.include_role:
+        name: common
+        tasks_from: packages
+      vars:
+        packages_update_cache: true
+        packages_debian: "{{ messenging_repo_packages_debian }}"
 
 - hosts: local
   connection: local
   vars_files:
     - vars/messenging.yml
   tasks:
-    - name: Create a template for messenging VM
+    - name: Shutdown the messenging template
       qubesos:
         guest: "{{ host_messenging_template }}"
-        state: present
-        vmtype: "TemplateVM"
-        properties:
-          template: "{{ messenging_base_template }}"
-          label: blue
-      when: 0 > 1
+        state: shutdown
+    - name: Remove the network
+      ansible.builtin.command: qvm-prefs {{ host_messenging_template }} netvm ''
 
-- hosts: "{{ host_messenging_template }}"
-  connection: qubes
-  vars_files:
-    - vars/messenging.yml
-  roles:
-    - role: common
-  tasks:
-    - name: Install third party repositories
-      include_role:
-        name: common
-        tasks_from: packages
-      vars:
-        packages_redhat: "{{ messenging_repo_packages_redhat }}"
-    - name: Enable Google Chrome repository
-      become: yes
-      command:
-        cmd: dnf config-manager setopt google-chrome.enabled=1
-    - name: Install Chrome (used for Teams) and SNAP
-      include_role:
-        name: common
-        tasks_from: packages
-      vars:
-        packages_redhat: "{{ messenging_packages_redhat }}"
-    - name: Create SNAP Symlink
-      become: yes
-      file:
-        src: /var/lib/snapd/snap
-        dest: /snap
-        state: link
-    - name: Reboot after SNAP installation
-      reboot:
-        reboot_timeout: 300
-
+#
+# AppVM
+#
 - hosts: local
   connection: local
   vars_files:
     - vars/messenging.yml
   tasks:
-    - name: Create messenging AppVM
-      qubesos:
-        guest: "{{ host_messenging_vm }}"
-        state: present
-        properties:
-          template: "{{ host_messenging_template }}"
-          label: blue
-          netvm: "{{ messenging_netvm }}"
+    - name: Check if VM exists
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_messenging_vm }}$'"
+      register: messenging_vm_check
+      failed_when: false
+      changed_when: false
+    - name: Create VM
+      command: qvm-create --class AppVM --label blue --template {{ host_messenging_template }} {{ host_messenging_vm }}
+      when: messenging_vm_check.rc != 0
+    - name: Set VM label
+      command: qvm-prefs {{ host_messenging_vm }} label blue
+    - name: Set VM network
+      command: qvm-prefs {{ host_messenging_vm }} netvm {{ netvm_default }}
+    - include_role:
+        name: set_prefs
+        apply:
+          tags: [prefs, messenging]
+      tags: [prefs]
+      vars:
+        target_vm: "{{ host_messenging_vm }}"
+        vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
+        vm_private_storage: "{{ messenging_private_storage if messenging_vm_check.rc != 0 else '' }}"
 
 - hosts: "{{ host_messenging_vm }}"
   connection: qubes
   vars_files:
     - vars/messenging.yml
   tasks:
-    - name: Install Snap Signal
+    - name: Wait for snapd to finish seeding
+      ansible.builtin.command: snap wait system seed.loaded
+      changed_when: false
+    - name: Install Snap applications
       community.general.snap:
-        name: signal-desktop
-        state: present
-    - name: Install Snap Whatsie
-      community.general.snap:
-        name: whatsie
+        name: "{{ messenging_snap_packages | map(attribute='name') | list }}"
         state: present
     - name: Make sure autostart folder exists
-      file:
+      ansible.builtin.file:
         path: "/rw/home/user/.config/autostart"
         state: directory
         mode: 0755
     - name: Create autostart Signal symlink
-      file:
-        src: "/var/lib/snapd/desktop/applications/signal-desktop_signal-desktop.desktop"
+      ansible.builtin.file:
+        src: "/usr/share/applications/signal-desktop.desktop"
         dest: "/rw/home/user/.config/autostart/signal.desktop"
         state: link
-    - name: Create autostart Whatsie symlink
-      file:
-        src: "/var/lib/snapd/desktop/applications/whatsie_whatsie.desktop"
-        dest: "/rw/home/user/.config/autostart/whatsie.desktop"
+    - name: Create autostart symlinks for Snap applications
+      ansible.builtin.file:
+        src: "/var/lib/snapd/desktop/applications/{{ item.desktop }}"
+        dest: "/rw/home/user/.config/autostart/{{ item.name }}.desktop"
         state: link
+      loop: "{{ messenging_snap_packages }}"
+      loop_control:
+        label: "{{ item.name }}"
     - name: Create autostart Google Chrome symlink
-      file:
+      ansible.builtin.file:
         src: "/usr/share/applications/google-chrome.desktop"
         dest: "/rw/home/user/.config/autostart/google-chrome.desktop"
         state: link
