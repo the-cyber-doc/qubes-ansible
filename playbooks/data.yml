@@ -8,7 +8,7 @@
     - vars/data.yml
   tasks:
     - name: Check if Template exists
-      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w {{ host_data_template }}"
+      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_data_template }}$'"
       register: template_check
       failed_when: false
       changed_when: false
@@ -64,7 +64,7 @@
     - vars/data.yml
   tasks:
     - name: Check if AppVM exists
-      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w {{ host_data_app }}"
+      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_data_app }}$'"
       register: app_check
       failed_when: false
       changed_when: false

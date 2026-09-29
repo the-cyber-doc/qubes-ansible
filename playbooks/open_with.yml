@@ -43,7 +43,7 @@
     - vars/open-with.yml
   tasks:
     - name: Check if DVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w {{ host_open-with_dvm }}"
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_open-with_dvm }}$'"
       register: open-with_dvm_check
       failed_when: false
       changed_when: false
@@ -126,7 +126,7 @@
     - vars/sys_gpu.yml
   tasks:
     - name: Check if DispVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w {{ open-with_dispvm }}"
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ open-with_dispvm }}$'"
       register: open-with_dispvm_check
       failed_when: false
       changed_when: false

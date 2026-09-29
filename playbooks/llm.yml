@@ -43,7 +43,7 @@
     - vars/llm.yml
   tasks:
     - name: Check if DVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w {{ host_llm_dvm }}"
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_llm_dvm }}$'"
       register: llm_dvm_check
       failed_when: false
       changed_when: false
@@ -126,7 +126,7 @@
     - vars/sys_gpu.yml
   tasks:
     - name: Check if DispVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w {{ llm_dispvm }}"
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ llm_dispvm }}$'"
       register: llm_dispvm_check
       failed_when: false
       changed_when: false

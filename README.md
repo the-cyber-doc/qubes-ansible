@@ -21,7 +21,7 @@ Specifically it automates:
 - **OCR stack** — PDF OCR service backed by the LLM DispVM, with its own TCP proxy
 - **sys-gpu** — a shared GPU DispVM template for workloads that need the card but
   not Ollama
-- **Messaging** — Signal, WhatsApp (Whatsie), and Chrome in an isolated Fedora AppVM
+- **Messaging** — Signal (official apt repo), WhatsApp (Whatsie via Snap), and Chrome in an isolated Debian AppVM
 - **Burp** — a disposable web-testing VM: Burp Suite Community auto-starts its proxy and
   Firefox is pre-configured to route its traffic through Burp; a fresh disposable is spawned
   on every launch; JDownloader 2 is also installed
@@ -159,7 +159,7 @@ without removing the code.
     ├── ocr/                     # Type-aware: Python3 + venv tooling (template); local-llm-pdf-ocr, UV venv, .env, start.sh, rc.local (DVM)
     ├── sys_gpu/                 # Type-aware: NVIDIA drivers + CUDA, no Ollama (template); nothing (DVM)
     ├── secureboot/              # sbctl backup/restore scripts + kernel install hook
-    ├── messenging/              # Chrome, Snap, Signal, Whatsie; autostart symlinks
+    ├── messenging/              # Signal + Chrome from their apt repos, Whatsie via Snap; autostart symlinks
     ├── burp/                    # Type-aware: Burp Suite Community + Firefox cert tooling (template); proxy config + autostart session script (DVM)
     ├── vpn/                     # Type-aware: Proton VPN app + AppIndicator extension (template); bind-dirs entry (DVM)
     ├── firefox/                 # Firefox install, policies, and skel profile

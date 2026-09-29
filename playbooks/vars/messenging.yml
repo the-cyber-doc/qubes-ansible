@@ -1,12 +1,20 @@
 ---
-messenging_base_template: fedora-43-xfce
-host_messenging_template: fedora-43-xfce-messenging
+messenging_private_storage: 4GiB
+messenging_base_template: "debian-{{ debian_version }}-xfce"
+host_messenging_template: "messenging-debian-{{ debian_version }}"
 host_messenging_vm: messenging
-messenging_netvm: disp-sys-vpn-proton-ch
-messenging_repo_packages_redhat:
-  - fedora-workstation-repositories
-# Installed after the Google Chrome repository is enabled
-messenging_packages_redhat:
-  - google-chrome-stable
+# Third party apt repositories (Signal Desktop, Google Chrome)
+messenging_signal_key_url: https://updates.signal.org/desktop/apt/keys.asc
+messenging_signal_keyring: /usr/share/keyrings/signal-desktop-keyring.gpg
+messenging_signal_sources_url: https://updates.signal.org/static/desktop/apt/signal-desktop.sources
+messenging_chrome_key_url: https://dl.google.com/linux/linux_signing_key.pub
+messenging_chrome_keyring: /usr/share/keyrings/google-chrome.gpg
+# Snap is still needed for Whatsie
+messenging_packages_debian:
+  - gnupg
   - snapd
   - qubes-snapd-helper
+# Installed after the Signal and Google Chrome repositories are added
+messenging_repo_packages_debian:
+  - signal-desktop
+  - google-chrome-stable

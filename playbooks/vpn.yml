@@ -45,7 +45,7 @@
     - vars/vpn.yml
   tasks:
     - name: Check if DVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w {{ host_vpn_dvm }}"
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_vpn_dvm }}$'"
       register: vpn_dvm_check
       failed_when: false
       changed_when: false
@@ -96,7 +96,7 @@
     - vars/vpn.yml
   tasks:
     - name: Check if DispVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w {{ vpn_dispvm }}"
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ vpn_dispvm }}$'"
       register: vpn_dispvm_check
       failed_when: false
       changed_when: false

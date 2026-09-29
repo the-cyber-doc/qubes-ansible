@@ -1,6 +1,6 @@
 ---
 - name: Check if {{ clone_dest }} exists
-  shell: "qvm-ls --raw-data --fields name | grep -w {{ clone_dest }}"
+  shell: "qvm-ls --raw-data --fields name | grep -w '{{ clone_dest }}$'"
   register: _clone_check
   failed_when: false
   changed_when: false

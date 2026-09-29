@@ -41,7 +41,7 @@
     - vars/ocr.yml
   tasks:
     - name: Check if DVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w {{ host_ocr_dvm }}"
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_ocr_dvm }}$'"
       register: dvm_check
       failed_when: false
       changed_when: false
@@ -94,7 +94,7 @@
     - vars/ocr.yml
   tasks:
     - name: Check if DispVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w {{ ocr_dispvm }}"
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ ocr_dispvm }}$'"
       register: dispvm_check
       failed_when: false
       changed_when: false
