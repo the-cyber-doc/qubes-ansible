@@ -115,9 +115,9 @@
     - name: Wait for snapd to finish seeding
       ansible.builtin.command: snap wait system seed.loaded
       changed_when: false
-    - name: Install Snap Whatsie
+    - name: Install Snap applications
       community.general.snap:
-        name: whatsie
+        name: "{{ messenging_snap_packages | map(attribute='name') | list }}"
         state: present
     - name: Make sure autostart folder exists
       ansible.builtin.file:
@@ -129,11 +129,14 @@
         src: "/usr/share/applications/signal-desktop.desktop"
         dest: "/rw/home/user/.config/autostart/signal.desktop"
         state: link
-    - name: Create autostart Whatsie symlink
+    - name: Create autostart symlinks for Snap applications
       ansible.builtin.file:
-        src: "/var/lib/snapd/desktop/applications/whatsie_whatsie.desktop"
-        dest: "/rw/home/user/.config/autostart/whatsie.desktop"
+        src: "/var/lib/snapd/desktop/applications/{{ item.desktop }}"
+        dest: "/rw/home/user/.config/autostart/{{ item.name }}.desktop"
         state: link
+      loop: "{{ messenging_snap_packages }}"
+      loop_control:
+        label: "{{ item.name }}"
     - name: Create autostart Google Chrome symlink
       ansible.builtin.file:
         src: "/usr/share/applications/google-chrome.desktop"

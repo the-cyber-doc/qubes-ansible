@@ -9,7 +9,7 @@ messenging_signal_keyring: /usr/share/keyrings/signal-desktop-keyring.gpg
 messenging_signal_sources_url: https://updates.signal.org/static/desktop/apt/signal-desktop.sources
 messenging_chrome_key_url: https://dl.google.com/linux/linux_signing_key.pub
 messenging_chrome_keyring: /usr/share/keyrings/google-chrome.gpg
-# Snap is still needed for Whatsie
+# snapd is needed for the apps in messenging_snap_packages
 messenging_packages_debian:
   - gnupg
   - snapd
@@ -18,3 +18,10 @@ messenging_packages_debian:
 messenging_repo_packages_debian:
   - signal-desktop
   - google-chrome-stable
+# Installed with snap in the AppVM and started automatically when it boots.
+# desktop is the launcher's file name under /var/lib/snapd/desktop/applications
+messenging_snap_packages:
+  - name: whatsie
+    desktop: whatsie_whatsie.desktop
+  - name: telegram-desktop
+    desktop: telegram-desktop_telegram-desktop.desktop
