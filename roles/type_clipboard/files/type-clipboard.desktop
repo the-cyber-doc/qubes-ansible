@@ -1,0 +1,4 @@
+[Desktop Entry]
+Type=Application
+Name=Type clipboard binding
+Exec=xbindkeys -n -f /etc/type-clipboard.xbindkeysrc

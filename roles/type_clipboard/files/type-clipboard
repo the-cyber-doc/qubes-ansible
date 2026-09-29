@@ -1,0 +1,26 @@
+#!/bin/bash
+# Types the clipboard into the focused window. Modes: type (default), oneline,
+# enter, slow, preview. WIN (set by clip-menu) is the window to type into.
+mode="${1:-type}"
+text="$(xclip -selection clipboard -o 2>/dev/null)" || exit 0
+[ -z "$text" ] && { notify-send "Clipboard is empty"; exit 0; }
+[ "${#text}" -gt 4000 ] && { notify-send "Clipboard too long (${#text} chars)"; exit 1; }
+
+if [ "$mode" = preview ]; then
+  notify-send "Clipboard (${#text} chars)" "${text:0:200}"; exit 0
+fi
+
+# Return focus to the window that was active before the menu opened
+[ -n "$WIN" ] && xdotool windowfocus --sync "$WIN" 2>/dev/null
+sleep 0.25
+
+delay=12
+case "$mode" in
+  oneline) text="${text//$'\r'/}"; text="${text//$'\n'/ }" ;;
+  slow)    delay=80 ;;
+esac
+
+xdotool type --clearmodifiers --delay "$delay" -- "$text"
+if [ "$mode" = enter ]; then
+  xdotool key --clearmodifiers Return
+fi

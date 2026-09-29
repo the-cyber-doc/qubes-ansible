@@ -46,12 +46,14 @@
 - hosts: "templatevms"
   connection: qubes
   gather_facts: false
-  tasks:
+  # pre_tasks, not tasks: roles run before tasks and need ansible_os_family
+  pre_tasks:
     - name: Gather facts
       ansible.builtin.setup:
   roles:
     - role: common
     - role: base_packages
+    - role: type_clipboard
 
 - hosts: local
   connection: local

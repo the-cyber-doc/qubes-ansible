@@ -1,0 +1,47 @@
+---
+# Runs in the TemplateVM (selected by main.yml). Types the clipboard into the focused
+# window with xdotool, for fields that block pasting: Ctrl + right-click opens a menu
+# of typing modes, Ctrl+Alt+V types it directly.
+- name: Install type clipboard packages
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_all: "{{ type_clipboard_packages }}"
+    packages_debian: "{{ type_clipboard_packages_debian }}"
+    packages_redhat: "{{ type_clipboard_packages_redhat }}"
+
+- name: Create the type clipboard scripts directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ type_clipboard_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Install the type-clipboard script
+  become: true
+  ansible.builtin.copy:
+    src: type-clipboard
+    dest: "{{ type_clipboard_dir }}/type-clipboard"
+    mode: "0755"
+
+- name: Install the clip-menu script
+  become: true
+  ansible.builtin.template:
+    src: clip-menu.j2
+    dest: "{{ type_clipboard_dir }}/clip-menu"
+    mode: "0755"
+
+- name: Install the key and mouse bindings
+  become: true
+  ansible.builtin.template:
+    src: type-clipboard.xbindkeysrc.j2
+    dest: /etc/type-clipboard.xbindkeysrc
+    mode: "0644"
+
+- name: Start the bindings in every VM based on this template
+  become: true
+  ansible.builtin.copy:
+    src: type-clipboard.desktop
+    dest: /etc/xdg/autostart/type-clipboard.desktop
+    mode: "0644"

@@ -153,6 +153,7 @@ without removing the code.
 └── roles/
     ├── common/                  # Shared tasks, listed first in every VM play: packages.yml (apt/dnf install), vm_type.yml (type-aware roles)
     ├── base_packages/           # htop + tmux + ... on any Linux VM (apt or dnf via ansible_os_family)
+    ├── type_clipboard/          # Type-aware: xdotool clipboard typing (Ctrl + right-click menu, Ctrl+Alt+V) in every Linux template; nothing (AppVM)
     ├── llm_template/            # NVIDIA drivers, CUDA, Ollama service + systemd overrides
     ├── llm_dvm_1/               # Qubes bind-dirs for /usr/share/ollama (model persistence)
     ├── llm_dvm_2/               # Pull Ollama models; create custom 32k/8k context variants

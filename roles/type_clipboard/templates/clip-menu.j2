@@ -1,0 +1,13 @@
+#!/bin/bash
+# {{ ansible_managed }}
+# Popup menu of type-clipboard modes, opened at the pointer.
+export WIN="$(xdotool getwindowfocus)"
+T={{ type_clipboard_dir }}/type-clipboard
+jgmenu --simple --at-pointer <<EOF
+Type clipboard,$T type
+Type as single line,$T oneline
+Type + Enter,$T enter
+Type slowly (strict forms),$T slow
+^sep()
+Preview clipboard,$T preview
+EOF
