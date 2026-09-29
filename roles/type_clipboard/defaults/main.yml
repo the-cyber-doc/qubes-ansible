@@ -1,0 +1,16 @@
+---
+# Not under /usr/local: an AppVM gets its own /usr/local from /rw/usrlocal instead
+# of inheriting the template's, so the scripts must live elsewhere on the root volume.
+type_clipboard_dir: /opt/clip-tools
+
+type_clipboard_packages:
+  - xdotool
+  - xclip
+  - xbindkeys
+  - jgmenu
+
+type_clipboard_packages_debian:
+  - libnotify-bin
+
+type_clipboard_packages_redhat:
+  - libnotify

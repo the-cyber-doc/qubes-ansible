@@ -121,51 +121,52 @@ without removing the code.
 
 ```
 .
-??? ansible-playbook.sh          # Wrapper ? always use this instead of ansible-playbook
-??? ansible.cfg                  # Sets inventory = ./inventory, roles_path = ./roles, strategy = qubes_proxy
-??? site.yml                     # Top-level entry point; imports all feature playbooks
-?
-??? inventory/
-?   ??? hosts.yml                # All VMs grouped by type; windows_vms group for exclusion
-?
-??? playbooks/
-?   ??? base.yml                 # Installs base packages + Firefox on all Linux templates + standalones
-?   ??? dom0.yml                 # Dom0: secure boot key management
-?   ??? llm.yml                  # LLM stack: template ? DVM ? DispVM ? networking
-?   ??? ocr.yml                  # OCR stack: template ? DVM ? DispVM ? networking
-?   ??? sys_gpu.yml              # sys-gpu: template ? DVM ? DispVM
-?   ??? messenging.yml           # Messaging: template packages + AppVM autostart
-?   ??? burp.yml                 # Burp: template (Burp + JDownloader 2 + Firefox proxy) ? disposable template
-?   ?
-?   ??? group_vars/
-?   ?   ??? all.yml              # Global vars: paths, netvm, debian_version
-?   ?
-?   ??? vars/
-?   ?   ??? llm.yml              # host_llm_template, host_llm_dvm, llm_memory, llm_tcp_port ?
-?   ?   ??? ocr.yml              # host_ocr_template, host_ocr_dvm, ocr_tcp_port ?
-?   ?   ??? sys_gpu.yml          # host_sys_gpu_template, gpu_pci_id_vga, gpu_pci_id_audio ?
-?   ?   ??? messenging.yml       # host_messenging_template, host_messenging_vm ?
-?   ?   ??? burp.yml             # host_burp_template, host_burp_dvm, burp_dispvm, burp_proxy_port ?
-?   ?
-?   ??? tasks/
-?       ??? clone_template.yml         # Reusable (Dom0 plays only): clone + set netvm + set qrexec_timeout
-?
-??? roles/
-    ??? common/                  # Shared tasks, listed first in every VM play: packages.yml (apt/dnf install), vm_type.yml (type-aware roles)
-    ??? base_packages/           # htop + tmux + ... on any Linux VM (apt or dnf via ansible_os_family)
-    ??? llm_template/            # NVIDIA drivers, CUDA, Ollama service + systemd overrides
-    ??? llm_dvm_1/               # Qubes bind-dirs for /usr/share/ollama (model persistence)
-    ??? llm_dvm_2/               # Pull Ollama models; create custom 32k/8k context variants
-    ??? ocr/                     # Type-aware: Python3 + venv tooling (template); local-llm-pdf-ocr, UV venv, .env, start.sh, rc.local (DVM)
-    ??? sys_gpu/                 # Type-aware: NVIDIA drivers + CUDA, no Ollama (template); nothing (DVM)
-    ??? secureboot/              # sbctl backup/restore scripts + kernel install hook
-    ??? messenging/              # Signal + Chrome from their apt repos, Whatsie + Telegram via Snap; autostart symlinks
-    ??? burp/                    # Type-aware: Burp Suite Community + Firefox cert tooling (template); proxy config + autostart session script (DVM)
-    ??? vpn/                     # Type-aware: Proton VPN app + AppIndicator extension (template); bind-dirs entry (DVM)
-    ??? firefox/                 # Firefox install, policies, and skel profile
-    ??? jdownloader2/            # Type-aware: Java in the template; JDownloader 2 into ~/jd2 + desktop entry in the AppVM/DVM
-    ??? set_prefs/               # Reusable: set qrexec_timeout / maxmem / memory / vcpus on any VM
-    ??? appsmenu/                # Reusable: set a VM's App Menu whitelist via qvm-appmenus --set-whitelist
+├── ansible-playbook.sh          # Wrapper — always use this instead of ansible-playbook
+├── ansible.cfg                  # Sets inventory = ./inventory, roles_path = ./roles, strategy = qubes_proxy
+├── site.yml                     # Top-level entry point; imports all feature playbooks
+│
+├── inventory/
+│   └── hosts.yml                # All VMs grouped by type; windows_vms group for exclusion
+│
+├── playbooks/
+│   ├── base.yml                 # Installs base packages + Firefox on all Linux templates + standalones
+│   ├── dom0.yml                 # Dom0: secure boot key management
+│   ├── llm.yml                  # LLM stack: template → DVM → DispVM → networking
+│   ├── ocr.yml                  # OCR stack: template → DVM → DispVM → networking
+│   ├── sys_gpu.yml              # sys-gpu: template → DVM → DispVM
+│   ├── messenging.yml           # Messaging: template packages + AppVM autostart
+│   ├── burp.yml                 # Burp: template (Burp + JDownloader 2 + Firefox proxy) → disposable template
+│   │
+│   ├── group_vars/
+│   │   └── all.yml              # Global vars: paths, netvm, debian_version
+│   │
+│   ├── vars/
+│   │   ├── llm.yml              # host_llm_template, host_llm_dvm, llm_memory, llm_tcp_port …
+│   │   ├── ocr.yml              # host_ocr_template, host_ocr_dvm, ocr_tcp_port …
+│   │   ├── sys_gpu.yml          # host_sys_gpu_template, gpu_pci_id_vga, gpu_pci_id_audio …
+│   │   ├── messenging.yml       # host_messenging_template, host_messenging_vm …
+│   │   └── burp.yml             # host_burp_template, host_burp_dvm, burp_dispvm, burp_proxy_port …
+│   │
+│   └── tasks/
+│       └── clone_template.yml         # Reusable (Dom0 plays only): clone + set netvm + set qrexec_timeout
+│
+└── roles/
+    ├── common/                  # Shared tasks, listed first in every VM play: packages.yml (apt/dnf install), vm_type.yml (type-aware roles)
+    ├── base_packages/           # htop + tmux + ... on any Linux VM (apt or dnf via ansible_os_family)
+    ├── type_clipboard/          # Type-aware: xdotool clipboard typing (Ctrl + right-click menu, Ctrl+Alt+V) in every Linux template; nothing (AppVM)
+    ├── llm_template/            # NVIDIA drivers, CUDA, Ollama service + systemd overrides
+    ├── llm_dvm_1/               # Qubes bind-dirs for /usr/share/ollama (model persistence)
+    ├── llm_dvm_2/               # Pull Ollama models; create custom 32k/8k context variants
+    ├── ocr/                     # Type-aware: Python3 + venv tooling (template); local-llm-pdf-ocr, UV venv, .env, start.sh, rc.local (DVM)
+    ├── sys_gpu/                 # Type-aware: NVIDIA drivers + CUDA, no Ollama (template); nothing (DVM)
+    ├── secureboot/              # sbctl backup/restore scripts + kernel install hook
+    ├── messenging/              # Signal + Chrome from their apt repos, Whatsie + Telegram via Snap; autostart symlinks
+    ├── burp/                    # Type-aware: Burp Suite Community + Firefox cert tooling (template); proxy config + autostart session script (DVM)
+    ├── vpn/                     # Type-aware: Proton VPN app + AppIndicator extension (template); bind-dirs entry (DVM)
+    ├── firefox/                 # Firefox install, policies, and skel profile
+    ├── jdownloader2/            # Type-aware: Java in the template; JDownloader 2 into ~/jd2 + desktop entry in the AppVM/DVM
+    ├── set_prefs/               # Reusable: set qrexec_timeout / maxmem / memory / vcpus on any VM
+    └── appsmenu/                # Reusable: set a VM's App Menu whitelist via qvm-appmenus --set-whitelist
 ```
 
 
