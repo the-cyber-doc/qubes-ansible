@@ -43,7 +43,7 @@
     - vars/claude_desktop.yml
   tasks:
     - name: Check if AppVM exists
-      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w {{ host_claude_desktop_app }}"
+      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_claude_desktop_app }}$'"
       register: app_check
       failed_when: false
       changed_when: false

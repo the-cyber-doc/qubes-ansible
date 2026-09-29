@@ -47,7 +47,7 @@
     - vars/burp.yml
   tasks:
     - name: Check if DVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w {{ host_burp_dvm }}"
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_burp_dvm }}$'"
       register: burp_dvm_check
       failed_when: false
       changed_when: false

@@ -15,17 +15,17 @@ incremental changes.
 
 Specifically it automates:
 
-- **Dom0** — package updates, utility scripts (e.g. `reset-vm-resources.sh`), and optional secure-boot key management
-- **LLM stack** — NVIDIA driver/CUDA installation, Ollama service, model pulling,
+- **Dom0** ? package updates, utility scripts (e.g. `reset-vm-resources.sh`), and optional secure-boot key management
+- **LLM stack** ? NVIDIA driver/CUDA installation, Ollama service, model pulling,
   GPU PCI passthrough, and TCP proxy wiring so `claude-code` can reach the model
-- **OCR stack** — PDF OCR service backed by the LLM DispVM, with its own TCP proxy
-- **sys-gpu** — a shared GPU DispVM template for workloads that need the card but
+- **OCR stack** ? PDF OCR service backed by the LLM DispVM, with its own TCP proxy
+- **sys-gpu** ? a shared GPU DispVM template for workloads that need the card but
   not Ollama
-- **Messaging** — Signal (official apt repo), WhatsApp (Whatsie) and Telegram via Snap, and Chrome in an isolated Debian AppVM
-- **Burp** — a disposable web-testing VM: Burp Suite Community auto-starts its proxy and
+- **Messaging** ? Signal (official apt repo), WhatsApp (Whatsie) and Telegram via Snap, and Chrome in an isolated Debian AppVM
+- **Burp** ? a disposable web-testing VM: Burp Suite Community auto-starts its proxy and
   Firefox is pre-configured to route its traffic through Burp; a fresh disposable is spawned
   on every launch; JDownloader 2 is also installed
-- **Base packages** — `htop` and `tmux` on every Linux template and standalone VM
+- **Base packages** ? `htop` and `tmux` on every Linux template and standalone VM
 
 ---
 
@@ -35,7 +35,7 @@ Specifically it automates:
 
 Ansible evaluates the `hosts:` field of every play *before* it loads `vars_files`.
 This means any variable used in a `hosts:` pattern must be injected via `-e` (extra
-vars) or be in the inventory — it cannot live in a vars file.
+vars) or be in the inventory ? it cannot live in a vars file.
 
 `ansible-playbook.sh` solves this transparently. It reads every file under
 `playbooks/vars/` plus `group_vars/all.yml`, resolves simple Jinja2 references,
@@ -47,15 +47,15 @@ forwarding all arguments to `ansible-playbook`.
 The `qubes` connection plugin (used for every `appvms`/`templatevms`/`standalonevms`/
 `disp_vms` host) talks to target VMs via `qvm-run`, run by the `ansible-playbook`
 process itself. With Ansible's default `linear` strategy, that means a target qube's
-output is parsed directly inside the controller process — which this project runs
+output is parsed directly inside the controller process ? which this project runs
 from Dom0. A compromised or malicious qube could exploit that to reach Dom0.
 
 `qubes_proxy` (set globally in `ansible.cfg`) closes that hole: instead of connecting
 directly, it proxies the connection through a fresh management disposable
 (`disp-mgmt-<template>`) based on the target's own template. A hostile response can
 at most compromise that disposable, not the controller. This requires the
-`qubes.AnsibleVM` qrexec service — installed by the `qubes-ansible-vm` (Fedora) /
-`qubes-ansible` (Debian) package — to be present in every template that will be
+`qubes.AnsibleVM` qrexec service ? installed by the `qubes-ansible-vm` (Fedora) /
+`qubes-ansible` (Debian) package ? to be present in every template that will be
 targeted; `base.yml` bootstraps it automatically (see below).
 
 ### `host_` prefix convention
@@ -70,20 +70,20 @@ that the variable must be pre-injected. All other variables are loaded normally 
 Every feature with a DispVM follows the same four-phase sequence:
 
 ```
-Template → DVM → DispVM → Networking
+Template ? DVM ? DispVM ? Networking
 ```
 
-1. **Template** — clone a base Qubes template, temporarily enable networking,
+1. **Template** ? clone a base Qubes template, temporarily enable networking,
    install packages and services inside the VM, then remove networking and shut down.
    The `base_packages` and `firefox` roles run here first on every template to establish a baseline
    (the `base.yml` play installs Firefox with the `fireshot` and `print_edit_we` optional extensions).
-2. **DVM** — create an AppVM with `template_for_dispvms=true`. This is the
+2. **DVM** ? create an AppVM with `template_for_dispvms=true`. This is the
    *persistent layer*: bind-dirs are configured here and models are pulled into
    this VM's private volume so they survive DispVM restarts.
-3. **DispVM** — create the final stateless VM (`class DispVM`) with PCI passthrough,
+3. **DispVM** ? create the final stateless VM (`class DispVM`) with PCI passthrough,
    fixed memory, and the DVM as its template. Restarting this VM always starts
    fresh from the DVM snapshot.
-4. **Networking** — add a `qubes.ConnectTCP` policy rule in Dom0 and write a
+4. **Networking** ? add a `qubes.ConnectTCP` policy rule in Dom0 and write a
    `qvm-connect-tcp` line into the client VM's `rc.local` so the TCP tunnel is
    re-established on every boot.
 
@@ -175,7 +175,7 @@ without removing the code.
 ## Firefox role
 
 The `firefox` role installs Firefox and applies a base configuration that works for
-any template or AppVM. It is not wired into `site.yml` by default — include it from
+any template or AppVM. It is not wired into `site.yml` by default ? include it from
 whichever feature playbook needs it.
 
 ### What the role always does
@@ -265,15 +265,15 @@ playbook's `firefox_extra_extensions` list.
 
 ```
 claude-code (AppVM)
-    │  qvm-connect-tcp 11434:@default:11434  (rc.local)
-    ▼
-qubes.ConnectTCP policy → llm-disp (DispVM, GPU passthrough)
-                               │  Ollama :11434
+    ?  qvm-connect-tcp 11434:@default:11434  (rc.local)
+    ?
+qubes.ConnectTCP policy ? llm-disp (DispVM, GPU passthrough)
+                               ?  Ollama :11434
 
 ocr-disp (DispVM)
-    │  qvm-connect-tcp 11434:@default:11434  (rc.local)
-    ▼
-qubes.ConnectTCP policy → llm-disp
+    ?  qvm-connect-tcp 11434:@default:11434  (rc.local)
+    ?
+qubes.ConnectTCP policy ? llm-disp
 ```
 
 ---
@@ -281,7 +281,7 @@ qubes.ConnectTCP policy → llm-disp
 ## First-time setup
 
 Secret variables (currently just `admin_user`, your Dom0 username) are kept in an
-Ansible-vault-encrypted file that **is committed to the repository** — the ciphertext
+Ansible-vault-encrypted file that **is committed to the repository** ? the ciphertext
 is safe to share, only the vault password must be kept private.
 
 ### 1. Create and encrypt the vault file
@@ -308,13 +308,13 @@ commit.
 
 ### 2. Supply the vault password at runtime
 
-**Option A — prompt each run (simplest):**
+**Option A ? prompt each run (simplest):**
 
 ```bash
 ./ansible-playbook.sh site.yml --tags dom0 --ask-vault-pass
 ```
 
-**Option B — password file (recommended for repeated use):**
+**Option B ? password file (recommended for repeated use):**
 
 ```bash
 echo 'your_vault_password' > .vault_pass
@@ -322,7 +322,7 @@ chmod 600 .vault_pass
 ```
 
 `.vault_pass` is listed in `.gitignore` and will never be committed. The wrapper
-script detects it automatically and passes it to `ansible-playbook` — no extra flag
+script detects it automatically and passes it to `ansible-playbook` ? no extra flag
 needed:
 
 ```bash
@@ -338,7 +338,7 @@ ansible-vault edit playbooks/group_vars/all/secrets.yml
 ```
 
 Add the new variable in plain YAML. It is immediately available in every playbook
-and role as a normal Ansible variable — no `vars_files` entry needed because the
+and role as a normal Ansible variable ? no `vars_files` entry needed because the
 vault file lives in `group_vars/all/` and Ansible loads that directory automatically
 for every play.
 
@@ -386,12 +386,12 @@ To see which tasks would execute without making any changes:
 ## Running
 
 All commands must be run from **Dom0**, at the project root.
-Always use `./ansible-playbook.sh` — never `ansible-playbook` directly.
+Always use `./ansible-playbook.sh` ? never `ansible-playbook` directly.
 
 ### Run a single feature end-to-end
 
 ```bash
-# Provision the full LLM stack (template → DVM → DispVM → networking)
+# Provision the full LLM stack (template ? DVM ? DispVM ? networking)
 ./ansible-playbook.sh site.yml --tags llm
 
 # Provision the OCR stack
@@ -406,7 +406,7 @@ Always use `./ansible-playbook.sh` — never `ansible-playbook` directly.
 # Provision the Burp disposable web-testing template (Burp + Firefox proxy)
 ./ansible-playbook.sh site.yml --tags burp
 
-# Apply Dom0 configuration (package updates, scripts — secureboot excluded)
+# Apply Dom0 configuration (package updates, scripts ? secureboot excluded)
 ./ansible-playbook.sh site.yml --tags dom0
 ```
 
@@ -418,7 +418,7 @@ Always use `./ansible-playbook.sh` — never `ansible-playbook` directly.
 > Firefox (already routed through Burp), so its force-installed extensions download
 > successfully. Progress is logged to `~/.burp-session.log` in the disposable.
 
-### Configure secure boot (Dom0 — explicit opt-in)
+### Configure secure boot (Dom0 ? explicit opt-in)
 
 The `secureboot` role is tagged `never` and does **not** run as part of the normal
 `--tags dom0` run. Invoke it explicitly when you need to (re)deploy the sbctl
@@ -449,7 +449,7 @@ the `qubes-ansible-vm` (Fedora) / `qubes-ansible` (Debian) package into every
 template that doesn't already have it. This package provides the `qubes.AnsibleVM`
 qrexec service that the `qubes_proxy` strategy (see below) needs to proxy a
 connection through a management disposable based on that template. The bootstrap
-itself runs over `connection: local` with raw `qvm-run` — using `connection: qubes`
+itself runs over `connection: local` with raw `qvm-run` ? using `connection: qubes`
 here would be circular, since the management disposable it would need is based on
 the very template that doesn't have the service yet. Already-bootstrapped templates
 are skipped (network is only toggled on and the template only shut down for
@@ -471,7 +471,7 @@ that already succeeded.
 ./ansible-playbook.sh site.yml --tags llm --start-at-task "Pull Gemma 4 E4B model"
 
 # Resume OCR provisioning from the DVM networking step
-./ansible-playbook.sh site.yml --tags ocr --start-at-task "Set network policy for OCR → LLM"
+./ansible-playbook.sh site.yml --tags ocr --start-at-task "Set network policy for OCR ? LLM"
 ```
 
 ### Override a variable at runtime

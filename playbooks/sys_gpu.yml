@@ -43,7 +43,7 @@
     - vars/sys_gpu.yml
   tasks:
     - name: Check if DVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w {{ sys_gpu_dvm }}"
+      shell: "qvm-ls --raw-data --fields name | grep -w '{{ sys_gpu_dvm }}$'"
       register: dvm_check
       failed_when: false
       changed_when: false
