@@ -1,38 +1,51 @@
 ---
+# Builds the same Template -> DVM -> DispVM chain for Debian and Fedora; each
+# Dom0 play loops over open_with_builds, each in-VM play targets both VMs.
+
 #
 # Template
 #
 - hosts: local
   connection: local
   vars_files:
-    - vars/open-with.yml
+    - vars/open_with.yml
   tasks:
     - include_tasks: tasks/clone_template.yml
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.template }}"
       vars:
-        clone_src: "{{ open-with_base_template }}"
-        clone_dest: "{{ host_open-with_template }}"
+        clone_src: "{{ item.base_template }}"
+        clone_dest: "{{ item.template }}"
 
-- hosts: "{{ host_open-with_template | default([]) }}"
+- hosts: "{{ [host_open_with_template_debian | default(''), host_open_with_template_fedora | default('')] | select | list }}"
   become: yes
   connection: qubes
   vars_files:
-    - vars/open-with.yml
+    - vars/open_with.yml
   roles:
     - role: common
     - role: base_packages
-    - role: open-with_template
+    - role: firefox
+    - role: type_clipboard
 
 - hosts: local
   connection: local
   vars_files:
-    - vars/open-with.yml
+    - vars/open_with.yml
   tasks:
-    - name: Shutdown the OPEN-WITH Template
+    - name: Shutdown the Open-with Templates
       qubesos:
-        guest: "{{ host_open-with_template }}"
+        guest: "{{ item.template }}"
         state: shutdown
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.template }}"
     - name: Remove the network
-      command: qvm-prefs {{ host_open-with_template }} netvm ''
+      ansible.builtin.command: qvm-prefs {{ item.template }} netvm ''
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.template }}"
 
 #
 # DVM
@@ -40,81 +53,79 @@
 - hosts: local
   connection: local
   vars_files:
-    - vars/open-with.yml
+    - vars/open_with.yml
   tasks:
     - name: Check if DVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_open-with_dvm }}$'"
-      register: open-with_dvm_check
+      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w '{{ item.dvm }}$'"
+      register: open_with_dvm_check
       failed_when: false
       changed_when: false
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dvm }}"
     - name: Create DVM
-      command: qvm-create --class AppVM --label blue --template {{ host_open-with_template }} {{ host_open-with_dvm }}
-      when: open-with_dvm_check.rc != 0
+      ansible.builtin.command: qvm-create --class AppVM --label blue --template {{ item.item.template }} {{ item.item.dvm }}
+      when: item.rc != 0
+      loop: "{{ open_with_dvm_check.results }}"
+      loop_control:
+        label: "{{ item.item.dvm }}"
     - name: Set DVM label
-      command: qvm-prefs {{ host_open-with_dvm }} label blue
+      ansible.builtin.command: qvm-prefs {{ item.dvm }} label blue
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dvm }}"
     - name: Set DVM network
-      command: qvm-prefs {{ host_open-with_dvm }} netvm {{ netvm_default }}
+      ansible.builtin.command: qvm-prefs {{ item.dvm }} netvm {{ netvm_default }}
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dvm }}"
     - name: Set as DispVM template
-      command: qvm-prefs {{ host_open-with_dvm }} template_for_dispvms true
-    - name: Resize private volume
-      command: qvm-volume resize {{ host_open-with_dvm }}:private 100GB
-      when: open-with_dvm_check.rc != 0
+      ansible.builtin.command: qvm-prefs {{ item.dvm }} template_for_dispvms true
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dvm }}"
     - include_role:
         name: set_prefs
         apply:
           tags: [prefs, open-with]
       tags: [prefs]
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dvm }}"
       vars:
-        target_vm: "{{ host_open-with_dvm }}"
+        target_vm: "{{ item.dvm }}"
         vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
+    - include_role:
+        name: appsmenu_add
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dvm }}"
+      vars:
+        appsmenu_add_target_vm: "{{ item.dvm }}"
+        appsmenu_add_applications: "{{ item.appsmenu }}"
 
-- hosts: "{{ host_open-with_dvm | default([]) }}"
+- hosts: "{{ [host_open_with_dvm_debian | default(''), host_open_with_dvm_fedora | default('')] | select | list }}"
   become: yes
   connection: qubes
   vars_files:
-    - vars/open-with.yml
+    - vars/open_with.yml
   roles:
     - role: common
-    - role: open-with_dvm_1
+    - role: xfce
+    - role: type_clipboard
 
 - hosts: local
   connection: local
   vars_files:
-    - vars/open-with.yml
+    - vars/open_with.yml
   tasks:
-    - name: Shutdown the OPEN-WITH DVM
+    - name: Shutdown the Open-with DVMs
       qubesos:
-        guest: "{{ host_open-with_dvm }}"
+        guest: "{{ item.dvm }}"
         state: shutdown
-
-- hosts: local
-  connection: local
-  vars_files:
-    - vars/open-with.yml
-  tasks:
-    - name: Start the OPEN-WITH DVM
-      qubesos:
-        guest: "{{ host_open-with_dvm }}"
-        state: running
-
-- hosts: "{{ host_open-with_dvm | default([]) }}"
-  become: yes
-  connection: qubes
-  vars_files:
-    - vars/open-with.yml
-  roles:
-    - role: common
-    - role: open-with_dvm_2
-
-- hosts: local
-  connection: local
-  vars_files:
-    - vars/open-with.yml
-  tasks:
-    - name: Shutdown the OPEN-WITH DVM
-      qubesos:
-        guest: "{{ host_open-with_dvm }}"
-        state: shutdown
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dvm }}"
 
 #
 # DispVM
@@ -122,32 +133,53 @@
 - hosts: local
   connection: local
   vars_files:
-    - vars/open-with.yml
-    - vars/sys_gpu.yml
+    - vars/open_with.yml
   tasks:
     - name: Check if DispVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w '{{ open-with_dispvm }}$'"
-      register: open-with_dispvm_check
+      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w '{{ item.dispvm }}$'"
+      register: open_with_dispvm_check
       failed_when: false
       changed_when: false
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dispvm }}"
     - name: Create DispVM
-      command: qvm-create --class DispVM --label red --template {{ host_open-with_dvm }} {{ open-with_dispvm }}
-      when: open-with_dispvm_check.rc != 0
+      ansible.builtin.command: qvm-create --class DispVM --label red --template {{ item.item.dvm }} {{ item.item.dispvm }}
+      when: item.rc != 0
+      loop: "{{ open_with_dispvm_check.results }}"
+      loop_control:
+        label: "{{ item.item.dispvm }}"
     - name: Set default DVM
-      command: qvm-prefs {{ open-with_dispvm }} default_dispvm {{ host_open-with_dvm }}
+      ansible.builtin.command: qvm-prefs {{ item.dispvm }} default_dispvm {{ item.dvm }}
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dispvm }}"
     - name: Set label
-      command: qvm-prefs {{ open-with_dispvm }} label red
-    - name: Set HVM mode
-      command: qvm-prefs {{ open-with_dispvm }} virt_mode hvm
+      ansible.builtin.command: qvm-prefs {{ item.dispvm }} label red
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dispvm }}"
     - name: Set network
-      command: qvm-prefs {{ open-with_dispvm }} netvm {{ netvm_default }}
+      ansible.builtin.command: qvm-prefs {{ item.dispvm }} netvm {{ netvm_default }}
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dispvm }}"
     - include_role:
         name: set_prefs
         apply:
           tags: [prefs, open-with]
       tags: [prefs]
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dispvm }}"
       vars:
-        target_vm: "{{ open-with_dispvm }}"
+        target_vm: "{{ item.dispvm }}"
         vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
-        vm_vcpus: "{{ open-with_vcpus }}"
-        vm_maxmem: "{{ open-with_maxmem }}"
+    - include_role:
+        name: appsmenu_add
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dispvm }}"
+      vars:
+        appsmenu_add_target_vm: "{{ item.dispvm }}"
+        appsmenu_add_applications: "{{ item.appsmenu }}"

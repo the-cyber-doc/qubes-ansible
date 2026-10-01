@@ -1,5 +1,51 @@
 ---
-open_with_base_template: "{{ ubuntu_version_latest }}"
-host_open_with_template: "open_with-template-{{ open_with_base_template }}"
-host_open_with_dvm: open_with-dvm
-open_with_dispvm: open_with-disp
+open_with_base_template_debian: "debian-{{ debian_version_latest }}-xfce"
+open_with_base_template_fedora: "fedora-{{ fedora_version_latest }}-xfce"
+host_open_with_template_debian: "open-with-template-debian-{{ debian_version_latest }}"
+host_open_with_template_fedora: "open-with-template-fedora-{{ fedora_version_latest }}"
+host_open_with_dvm_debian: open-with-dvm-debian
+host_open_with_dvm_fedora: open-with-dvm-fedora
+open_with_dispvm_debian: open-with-disp-debian
+open_with_dispvm_fedora: open-with-disp-fedora
+
+# One entry per distribution: the Dom0 plays loop over it to build each chain
+open_with_builds:
+  - base_template: "{{ open_with_base_template_debian }}"
+    template: "{{ host_open_with_template_debian }}"
+    dvm: "{{ host_open_with_dvm_debian }}"
+    dispvm: "{{ open_with_dispvm_debian }}"
+    appsmenu: "{{ open_with_appsmenu_common + open_with_appsmenu_debian }}"
+  - base_template: "{{ open_with_base_template_fedora }}"
+    template: "{{ host_open_with_template_fedora }}"
+    dvm: "{{ host_open_with_dvm_fedora }}"
+    dispvm: "{{ open_with_dispvm_fedora }}"
+    appsmenu: "{{ open_with_appsmenu_common + open_with_appsmenu_fedora }}"
+
+# Applications added to the App Menu of the DVMs and DispVMs (appsmenu_add role)
+open_with_appsmenu_common:
+  - gimp.desktop
+  - libreoffice-startcenter.desktop
+  - libreoffice-writer.desktop
+  - libreoffice-calc.desktop
+  - libreoffice-impress.desktop
+  - libreoffice-draw.desktop
+  - libreoffice-math.desktop
+open_with_appsmenu_debian:
+  - firefox-esr.desktop
+open_with_appsmenu_fedora:
+  - firefox.desktop
+
+# Installed by base_packages on top of its own list
+base_packages_playbook_extra:
+  - gimp
+  - libreoffice
+
+# Optional Firefox extensions pre-installed by the firefox role (all available)
+firefox_extra_extensions:
+  - print_edit_we
+  - fireshot
+  - multi_account_containers
+  - temporary_containers
+  - facebook_container
+  - google_container
+  - cookies_txt

@@ -31,3 +31,6 @@
 
 - import_playbook: playbooks/vpn.yml
   tags: [vpn]
+
+- import_playbook: playbooks/open_with.yml
+  tags: [open-with]

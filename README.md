@@ -25,7 +25,45 @@ Specifically it automates:
 - **Burp** ? a disposable web-testing VM: Burp Suite Community auto-starts its proxy and
   Firefox is pre-configured to route its traffic through Burp; a fresh disposable is spawned
   on every launch; JDownloader 2 is also installed
+- **Open-with** ? identical Debian and Fedora (latest versions, XFCE) template → DVM → DispVM
+  chains with GIMP, LibreOffice, Firefox and type-clipboard, for opening files in a disposable
 - **Base packages** ? `htop` and `tmux` on every Linux template and standalone VM
+
+---
+
+## Getting Started
+
+All commands run in Dom0.
+
+### 1. Install Ansible in Dom0
+
+```bash
+sudo qubes-dom0-update qubes-ansible
+```
+
+This pulls in Ansible itself plus the `qubes` connection plugin and the `qubesos` module.
+
+### 2. Generate the inventory
+
+`qubes-ansible` builds an inventory of every existing qube (see its
+[EXAMPLES.md](https://github.com/QubesOS/qubes-ansible/blob/main/EXAMPLES.md)) and
+writes it as a file named `inventory` in the current directory. Run it outside the
+project root, where an `inventory/` directory already exists:
+
+```bash
+mkdir -p ~/qubes-inventory && cd ~/qubes-inventory
+ansible localhost -m qubesos.core.command -a 'command=createinventory'
+```
+
+### 3. Ping the inventory
+
+```bash
+ansible -i inventory all -m ansible.builtin.ping
+```
+
+Each host should answer `"ping": "pong"`. Pinging a qube starts it if it is not
+running; narrow the target to a group or a name (e.g. `templatevms`) to avoid booting
+every VM.
 
 ---
 
@@ -136,6 +174,7 @@ without removing the code.
 │   ├── sys_gpu.yml              # sys-gpu: template → DVM → DispVM
 │   ├── messenging.yml           # Messaging: template packages + AppVM autostart
 │   ├── burp.yml                 # Burp: template (Burp + JDownloader 2 + Firefox proxy) → disposable template
+│   ├── open_with.yml            # Open-with: Debian + Fedora template → DVM → DispVM (GIMP, LibreOffice, Firefox)
 │   │
 │   ├── group_vars/
 │   │   └── all.yml              # Global vars: paths, netvm, debian_version
@@ -145,7 +184,8 @@ without removing the code.
 │   │   ├── ocr.yml              # host_ocr_template, host_ocr_dvm, ocr_tcp_port …
 │   │   ├── sys_gpu.yml          # host_sys_gpu_template, gpu_pci_id_vga, gpu_pci_id_audio …
 │   │   ├── messenging.yml       # host_messenging_template, host_messenging_vm …
-│   │   └── burp.yml             # host_burp_template, host_burp_dvm, burp_dispvm, burp_proxy_port …
+│   │   ├── burp.yml             # host_burp_template, host_burp_dvm, burp_dispvm, burp_proxy_port …
+│   │   └── open_with.yml        # host_open_with_{template,dvm}_{debian,fedora}, open_with_builds …
 │   │
 │   └── tasks/
 │       └── clone_template.yml         # Reusable (Dom0 plays only): clone + set netvm + set qrexec_timeout
@@ -166,7 +206,8 @@ without removing the code.
     ├── firefox/                 # Firefox install, policies, and skel profile
     ├── jdownloader2/            # Type-aware: Java in the template; JDownloader 2 into ~/jd2 + desktop entry in the AppVM/DVM
     ├── set_prefs/               # Reusable: set qrexec_timeout / maxmem / memory / vcpus on any VM
-    └── appsmenu/                # Reusable: set a VM's App Menu whitelist via qvm-appmenus --set-whitelist
+    ├── appsmenu/                # Reusable: set a VM's App Menu whitelist via qvm-appmenus --set-whitelist
+    └── appsmenu_add/            # Reusable: add applications to a VM's App Menu whitelist, keeping existing entries
 ```
 
 
@@ -359,6 +400,7 @@ connecting to any VM. Run this after every change:
 ./ansible-playbook.sh playbooks/sys_gpu.yml --syntax-check
 ./ansible-playbook.sh playbooks/messenging.yml --syntax-check
 ./ansible-playbook.sh playbooks/burp.yml --syntax-check
+./ansible-playbook.sh playbooks/open_with.yml --syntax-check
 ./ansible-playbook.sh playbooks/base.yml --syntax-check
 
 # Or via site.yml with a tag
@@ -405,6 +447,9 @@ Always use `./ansible-playbook.sh` ? never `ansible-playbook` directly.
 
 # Provision the Burp disposable web-testing template (Burp + Firefox proxy)
 ./ansible-playbook.sh site.yml --tags burp
+
+# Provision the Debian and Fedora open-with VMs (template → DVM → DispVM)
+./ansible-playbook.sh site.yml --tags open-with
 
 # Apply Dom0 configuration (package updates, scripts ? secureboot excluded)
 ./ansible-playbook.sh site.yml --tags dom0
