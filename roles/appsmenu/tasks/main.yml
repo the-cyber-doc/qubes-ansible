@@ -1,8 +1,0 @@
----
-- name: Write appmenus whitelist file for {{ appsmenu_target_vm }}
-  ansible.builtin.copy:
-    dest: "/tmp/{{ appsmenu_target_vm }}-appmenus-whitelist"
-    content: "{{ appsmenu_whitelist | join('\n') }}\n"
-
-- name: Set appmenus whitelist for {{ appsmenu_target_vm }}
-  ansible.builtin.command: qvm-appmenus --set-whitelist=/tmp/{{ appsmenu_target_vm }}-appmenus-whitelist {{ appsmenu_target_vm }}

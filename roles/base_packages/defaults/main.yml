@@ -1,8 +1,8 @@
 ---
 base_packages:
   - htop
-  - tmux
   - vim
+  - terminator
 
 base_packages_debian:
   - 7zip

@@ -24,6 +24,8 @@ firefox_available_extra_extensions:
     install_url: "https://addons.mozilla.org/firefox/downloads/latest/google-container/latest.xpi"
   cookies_txt:
     install_url: "https://addons.mozilla.org/firefox/downloads/latest/get-cookies-txt-locally/latest.xpi"
+  tab_reloader:
+    install_url: "https://addons.mozilla.org/firefox/downloads/latest/tab-reloader/latest.xpi"
 
 # Set in a playbook to pre-install optional extensions (user can remove them)
 # Example: firefox_extra_extensions: [multi_account_containers, facebook_container]
@@ -36,6 +38,13 @@ firefox_proxy: ""
 # Name (from profiles.ini) of the profile Firefox launchers are forced to use, so
 # the desktop entry honours the skel profile instead of a per-install dedicated one.
 firefox_profile_name: default
+
+# Candidate Firefox install directories; the first one holding application.ini
+# gets policies.json in its distribution/ subdirectory
+firefox_install_dirs:
+  - /usr/lib/firefox-esr
+  - /usr/lib64/firefox
+  - /usr/lib/firefox
 
 firefox_packages_debian:
   - firefox-esr

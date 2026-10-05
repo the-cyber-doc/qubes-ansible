@@ -7,13 +7,23 @@
     packages_debian: "{{ firefox_packages_debian }}"
     packages_redhat: "{{ firefox_packages_redhat }}"
 
+# The install directory differs per distro: /usr/lib/firefox-esr (Debian),
+# /usr/lib64/firefox (Fedora x86_64). policies.json is only read from the
+# distribution directory of the actual install, so look for application.ini.
+- name: Find Firefox install directory
+  ansible.builtin.stat:
+    path: "{{ item }}/application.ini"
+  loop: "{{ firefox_install_dirs }}"
+  register: _firefox_install_dir_stats
+
+- name: Fail when no Firefox install directory exists
+  ansible.builtin.fail:
+    msg: "No Firefox install directory found among {{ firefox_install_dirs | join(', ') }}"
+  when: _firefox_install_dir_stats.results | selectattr('stat.exists') | list | length == 0
+
 - name: Set Firefox distribution path
   ansible.builtin.set_fact:
-    firefox_dist_path: "{{ '/usr/lib/firefox-esr/distribution' if ansible_os_family == 'Debian' else '/usr/lib/firefox/distribution' }}"
-
-- name: Set Firefox desktop file path
-  ansible.builtin.set_fact:
-    firefox_desktop_file: "{{ '/usr/share/applications/firefox-esr.desktop' if ansible_os_family == 'Debian' else '/usr/share/applications/firefox.desktop' }}"
+    firefox_dist_path: "{{ (_firefox_install_dir_stats.results | selectattr('stat.exists') | first).item }}/distribution"
 
 - name: Create Firefox distribution directory
   ansible.builtin.file:
@@ -82,13 +92,31 @@
     mode: '0644'
   become: yes
 
+# The launcher name differs per distro: firefox-esr.desktop (Debian),
+# org.mozilla.firefox.desktop (recent Fedora), firefox.desktop (older Fedora).
+- name: Find Firefox desktop files
+  ansible.builtin.find:
+    paths: /usr/share/applications
+    patterns:
+      - firefox*.desktop
+      - org.mozilla.firefox*.desktop
+  register: _firefox_desktop_files
+
+- name: Fail when no Firefox desktop file exists
+  ansible.builtin.fail:
+    msg: "No Firefox desktop file found in /usr/share/applications"
+  when: _firefox_desktop_files.matched == 0
+
 # Force every launcher (menu, actions) to open the configured profile, bypassing
 # Firefox's per-install "dedicated profile" selection. Anchored on "Exec=" so the
 # TryExec= line is untouched; the leading lookahead skips lines already carrying
 # "-P" so the task is idempotent.
 - name: Force Firefox launchers to use the configured profile
   ansible.builtin.replace:
-    path: "{{ firefox_desktop_file }}"
+    path: "{{ item.path }}"
     regexp: '^Exec=(?!.* -P )(\S+)(.*)$'
     replace: 'Exec=\1 -P {{ firefox_profile_name }}\2'
+  loop: "{{ _firefox_desktop_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
   become: yes

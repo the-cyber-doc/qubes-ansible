@@ -8,6 +8,8 @@ host_open_with_dvm_fedora: open-with-dvm-fedora
 open_with_dispvm_debian: open-with-disp-debian
 open_with_dispvm_fedora: open-with-disp-fedora
 
+open_with_label: red
+
 # One entry per distribution: the Dom0 plays loop over it to build each chain
 open_with_builds:
   - base_template: "{{ open_with_base_template_debian }}"
@@ -49,3 +51,4 @@ firefox_extra_extensions:
   - facebook_container
   - google_container
   - cookies_txt
+  - tab_reloader

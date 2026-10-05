@@ -1,6 +1,5 @@
 ---
-# Adds applications to a VM's App Menu whitelist, keeping the entries already
-# there (unlike the appsmenu role, which replaces the whole list)
+# Adds applications to a VM's App Menu whitelist, keeping the entries already there
 - name: Get appmenus whitelist for {{ appsmenu_add_target_vm }}
   ansible.builtin.command: qvm-appmenus --get-whitelist {{ appsmenu_add_target_vm }}
   register: appsmenu_add_current

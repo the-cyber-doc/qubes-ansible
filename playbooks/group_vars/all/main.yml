@@ -1,6 +1,10 @@
 # group_vars/all/main.yml
 # Non-secret global variables. Secrets (admin_user, …) live in secrets.yml (vault).
 
+# Use the discovered Python interpreter without the "future installation of
+# another Python interpreter" warning on every host
+ansible_python_interpreter: auto_silent
+
 # Default qrexec timeout for all VMs
 qrexec_timeout_default: 3600
 

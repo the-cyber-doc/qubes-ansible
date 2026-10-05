@@ -206,7 +206,6 @@ without removing the code.
     ├── firefox/                 # Firefox install, policies, and skel profile
     ├── jdownloader2/            # Type-aware: Java in the template; JDownloader 2 into ~/jd2 + desktop entry in the AppVM/DVM
     ├── set_prefs/               # Reusable: set qrexec_timeout / maxmem / memory / vcpus on any VM
-    ├── appsmenu/                # Reusable: set a VM's App Menu whitelist via qvm-appmenus --set-whitelist
     └── appsmenu_add/            # Reusable: add applications to a VM's App Menu whitelist, keeping existing entries
 ```
 

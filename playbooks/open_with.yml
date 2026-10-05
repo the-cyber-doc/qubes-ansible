@@ -64,13 +64,13 @@
       loop_control:
         label: "{{ item.dvm }}"
     - name: Create DVM
-      ansible.builtin.command: qvm-create --class AppVM --label blue --template {{ item.item.template }} {{ item.item.dvm }}
+      ansible.builtin.command: qvm-create --class AppVM --label {{ open_with_label }} --template {{ item.item.template }} {{ item.item.dvm }}
       when: item.rc != 0
       loop: "{{ open_with_dvm_check.results }}"
       loop_control:
         label: "{{ item.item.dvm }}"
     - name: Set DVM label
-      ansible.builtin.command: qvm-prefs {{ item.dvm }} label blue
+      ansible.builtin.command: qvm-prefs {{ item.dvm }} label {{ open_with_label }}
       loop: "{{ open_with_builds }}"
       loop_control:
         label: "{{ item.dvm }}"
@@ -81,6 +81,11 @@
         label: "{{ item.dvm }}"
     - name: Set as DispVM template
       ansible.builtin.command: qvm-prefs {{ item.dvm }} template_for_dispvms true
+      loop: "{{ open_with_builds }}"
+      loop_control:
+        label: "{{ item.dvm }}"
+    - name: Add the DVM to the App menu
+      ansible.builtin.command: qvm-features {{ item.dvm }} appmenus-dispvm 1
       loop: "{{ open_with_builds }}"
       loop_control:
         label: "{{ item.dvm }}"
@@ -126,60 +131,3 @@
       loop: "{{ open_with_builds }}"
       loop_control:
         label: "{{ item.dvm }}"
-
-#
-# DispVM
-#
-- hosts: local
-  connection: local
-  vars_files:
-    - vars/open_with.yml
-  tasks:
-    - name: Check if DispVM exists
-      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w '{{ item.dispvm }}$'"
-      register: open_with_dispvm_check
-      failed_when: false
-      changed_when: false
-      loop: "{{ open_with_builds }}"
-      loop_control:
-        label: "{{ item.dispvm }}"
-    - name: Create DispVM
-      ansible.builtin.command: qvm-create --class DispVM --label red --template {{ item.item.dvm }} {{ item.item.dispvm }}
-      when: item.rc != 0
-      loop: "{{ open_with_dispvm_check.results }}"
-      loop_control:
-        label: "{{ item.item.dispvm }}"
-    - name: Set default DVM
-      ansible.builtin.command: qvm-prefs {{ item.dispvm }} default_dispvm {{ item.dvm }}
-      loop: "{{ open_with_builds }}"
-      loop_control:
-        label: "{{ item.dispvm }}"
-    - name: Set label
-      ansible.builtin.command: qvm-prefs {{ item.dispvm }} label red
-      loop: "{{ open_with_builds }}"
-      loop_control:
-        label: "{{ item.dispvm }}"
-    - name: Set network
-      ansible.builtin.command: qvm-prefs {{ item.dispvm }} netvm {{ netvm_default }}
-      loop: "{{ open_with_builds }}"
-      loop_control:
-        label: "{{ item.dispvm }}"
-    - include_role:
-        name: set_prefs
-        apply:
-          tags: [prefs, open-with]
-      tags: [prefs]
-      loop: "{{ open_with_builds }}"
-      loop_control:
-        label: "{{ item.dispvm }}"
-      vars:
-        target_vm: "{{ item.dispvm }}"
-        vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
-    - include_role:
-        name: appsmenu_add
-      loop: "{{ open_with_builds }}"
-      loop_control:
-        label: "{{ item.dispvm }}"
-      vars:
-        appsmenu_add_target_vm: "{{ item.dispvm }}"
-        appsmenu_add_applications: "{{ item.appsmenu }}"
