@@ -32,16 +32,26 @@
     dest: "{{ type_clipboard_dir }}/clip-menu"
     mode: "0755"
 
+# Kept with the scripts: it is generated here and only points at them, so it is
+# part of the tool rather than local configuration
 - name: Install the key and mouse bindings
   become: true
   ansible.builtin.template:
-    src: type-clipboard.xbindkeysrc.j2
-    dest: /etc/type-clipboard.xbindkeysrc
+    src: xbindkeysrc.j2
+    dest: "{{ type_clipboard_dir }}/xbindkeysrc"
     mode: "0644"
 
+- name: Remove the bindings from their previous location
+  become: true
+  ansible.builtin.file:
+    path: /etc/type-clipboard.xbindkeysrc
+    state: absent
+
+# /etc/xdg/autostart is the XDG system-wide autostart directory, read by every
+# session in the VMs based on this template
 - name: Start the bindings in every VM based on this template
   become: true
-  ansible.builtin.copy:
-    src: type-clipboard.desktop
+  ansible.builtin.template:
+    src: type-clipboard.desktop.j2
     dest: /etc/xdg/autostart/type-clipboard.desktop
     mode: "0644"

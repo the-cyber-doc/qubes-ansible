@@ -167,7 +167,7 @@ without removing the code.
 │   └── hosts.yml                # All VMs grouped by type; windows_vms group for exclusion
 │
 ├── playbooks/
-│   ├── base.yml                 # Installs base packages + Firefox on all Linux templates + standalones
+│   ├── base.yml                 # Installs base packages + Firefox on all Linux templates + standalones; Terminator as default terminal + in every Linux VM's App Menu
 │   ├── dom0.yml                 # Dom0: secure boot key management
 │   ├── llm.yml                  # LLM stack: template → DVM → DispVM → networking
 │   ├── ocr.yml                  # OCR stack: template → DVM → DispVM → networking

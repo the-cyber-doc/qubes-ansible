@@ -41,6 +41,28 @@ open_with_appsmenu_fedora:
 base_packages_playbook_extra:
   - gimp
   - libreoffice
+  - atril
+  - emacs
+  - ffmpeg
+  - filezilla
+  - ghostscript
+  - heif-gdk-pixbuf
+  - imagemagick
+  - inkscape
+  - jhead
+  - libimage-exiftool-perl
+  - libjxl-gdk-pixbuf
+  - libreoffice-calc
+  - libreoffice-draw
+  - libreoffice-writer
+  - mkvtoolnix
+  - okular
+  - parallel
+  - pdfarranger
+  - rename
+  - tumbler-plugins-extra
+  - vlc
+  - xournalpp
 
 # Optional Firefox extensions pre-installed by the firefox role (all available)
 firefox_extra_extensions:

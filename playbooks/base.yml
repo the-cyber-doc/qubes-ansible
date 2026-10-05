@@ -54,6 +54,17 @@
     - role: common
     - role: base_packages
     - role: type_clipboard
+  tasks:
+    # qubes-run-terminal (the "Run Terminal" menu entry) tries x-terminal-emulator
+    # first; Fedora has no such alternative, so it is created there
+    - name: Make Terminator the default terminal
+      community.general.alternatives:
+        name: x-terminal-emulator
+        link: /usr/bin/x-terminal-emulator
+        path: /usr/bin/terminator
+        priority: 60
+      become: yes
+      when: ansible_os_family in ['Debian', 'RedHat']
 
 - hosts: local
   connection: local
@@ -81,3 +92,13 @@
         vm_memory: "{{ item.memory | default('') }}"
         vm_vcpus: "{{ item.vcpus | default('') }}"
       loop: "{{ vm_resource_config }}"
+
+    - include_role:
+        name: appsmenu_add
+        apply:
+          tags: [appsmenu, base]
+      tags: [appsmenu]
+      vars:
+        appsmenu_add_target_vm: "{{ item }}"
+        appsmenu_add_applications: "{{ base_appsmenu_applications }}"
+      loop: "{{ (groups['appvms'] + groups['templatevms'] + groups['standalonevms'] + groups['disp_vms']) | difference(groups['windows_vms']) }}"

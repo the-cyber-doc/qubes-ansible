@@ -1,4 +1,8 @@
 ---
+# Added to the App Menu of every Linux VM (appsmenu_add role)
+base_appsmenu_applications:
+  - terminator.desktop
+
 vm_resource_config:
   - vm: data
     vcpus: 6
