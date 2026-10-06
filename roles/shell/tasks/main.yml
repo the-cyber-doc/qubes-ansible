@@ -1,0 +1,20 @@
+---
+# Type-aware role: template.yml in a TemplateVM, vm.yml in an AppVM/DVM, both
+# in a StandaloneVM (see roles/common/tasks/vm_type.yml).
+# Linux only: Windows VMs are skipped.
+# files/bash is a symlink to external/dotFiles/bash (git submodule).
+- name: Configure shell
+  when: ansible_os_family in ['Debian', 'RedHat']
+  block:
+    - name: Detect Qubes VM type
+      ansible.builtin.include_role:
+        name: common
+        tasks_from: vm_type
+
+    - name: Configure shell template side
+      ansible.builtin.include_tasks: template.yml
+      when: vm_run_template_tasks | bool
+
+    - name: Configure shell VM side
+      ansible.builtin.include_tasks: vm.yml
+      when: vm_run_vm_tasks | bool

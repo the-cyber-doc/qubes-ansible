@@ -1,48 +1,4 @@
 ---
-# Bootstraps the qubes-ansible-vm/qubes-ansible package into every template.
-# This must run over connection: local + raw qvm-run rather than connection: qubes:
-# the qubes_proxy strategy routes connection: qubes through a management disposable
-# based on the target template itself, so until this package is present there is no
-# way to reach the template through that connection at all (chicken-and-egg).
-- hosts: local
-  connection: local
-  tasks:
-    - name: Check for the qubes.AnsibleVM service
-      ansible.builtin.command: qvm-run --pass-io {{ item }} "test -e /etc/qubes-rpc/qubes.AnsibleVM"
-      loop: "{{ groups['templatevms'] | difference(groups['windows_vms']) }}"
-      register: qubes_ansible_vm_check
-      failed_when: false
-      changed_when: false
-      tags: [qubes-ansible-vm]
-
-    - name: Enable network to install qubes-ansible-vm/qubes-ansible
-      ansible.builtin.command: qvm-prefs {{ item.item }} netvm {{ netvm_default }}
-      loop: "{{ qubes_ansible_vm_check.results }}"
-      when: item.rc != 0
-      tags: [qubes-ansible-vm]
-
-    - name: Install qubes-ansible-vm (RedHat) or qubes-ansible (Debian)
-      ansible.builtin.command: >
-        qvm-run --pass-io {{ item.item }}
-        "which dnf >/dev/null 2>&1 && sudo dnf install -y qubes-ansible-vm || sudo apt-get install -y qubes-ansible"
-      loop: "{{ qubes_ansible_vm_check.results }}"
-      when: item.rc != 0
-      tags: [qubes-ansible-vm]
-
-    - name: Remove network after installing qubes-ansible-vm/qubes-ansible
-      ansible.builtin.command: qvm-prefs {{ item.item }} netvm ''
-      loop: "{{ qubes_ansible_vm_check.results }}"
-      when: item.rc != 0
-      tags: [qubes-ansible-vm]
-
-    - name: Shutdown templates that were just updated
-      qubesos:
-        guest: "{{ item.item }}"
-        state: shutdown
-      loop: "{{ qubes_ansible_vm_check.results }}"
-      when: item.rc != 0
-      tags: [qubes-ansible-vm]
-
 - hosts: "templatevms"
   connection: qubes
   gather_facts: false
@@ -54,6 +10,7 @@
     - role: common
     - role: base_packages
     - role: type_clipboard
+    - role: shell
   tasks:
     # qubes-run-terminal (the "Run Terminal" menu entry) tries x-terminal-emulator
     # first; Fedora has no such alternative, so it is created there
@@ -65,6 +22,20 @@
         priority: 60
       become: yes
       when: ansible_os_family in ['Debian', 'RedHat']
+
+# AppVMs/DVMs (and standalones) already have a home, so /etc/skel changes never
+# reach them: the shell role copies the dotfiles into the home directly.
+# Named DispVMs are not targeted: their home comes from their DVM.
+- hosts: "appvms:standalonevms:!windows_vms"
+  connection: qubes
+  gather_facts: false
+  # pre_tasks, not tasks: roles run before tasks and need ansible_os_family
+  pre_tasks:
+    - name: Gather facts
+      ansible.builtin.setup:
+  roles:
+    - role: common
+    - role: shell
 
 - hosts: local
   connection: local

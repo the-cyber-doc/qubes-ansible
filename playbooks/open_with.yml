@@ -25,6 +25,7 @@
     - vars/open_with.yml
   roles:
     - role: common
+    - role: shell
     - role: base_packages
     - role: firefox
     - role: type_clipboard
@@ -116,6 +117,7 @@
     - vars/open_with.yml
   roles:
     - role: common
+    - role: shell
     - role: xfce
     - role: type_clipboard
 

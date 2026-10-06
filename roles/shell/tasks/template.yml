@@ -1,0 +1,14 @@
+---
+# Runs in the TemplateVM (selected by main.yml). AppVMs created from the template
+# get the bash dotfiles from /etc/skel when their home is first populated.
+- name: Copy bash dotfiles into the skeleton directory
+  become: true
+  ansible.builtin.copy:
+    src: "bash/{{ item.name }}"
+    dest: "{{ shell_skel_dir }}/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop: "{{ shell_bash_files }}"
+  loop_control:
+    label: "{{ item.name }}"

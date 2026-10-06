@@ -163,11 +163,14 @@ without removing the code.
 ├── ansible.cfg                  # Sets inventory = ./inventory, roles_path = ./roles, strategy = qubes_proxy
 ├── site.yml                     # Top-level entry point; imports all feature playbooks
 │
+├── external/
+│   └── dotFiles/                # Git submodule: personal dotfiles (bash/ is deployed by the shell role)
+│
 ├── inventory/
 │   └── hosts.yml                # All VMs grouped by type; windows_vms group for exclusion
 │
 ├── playbooks/
-│   ├── base.yml                 # Installs base packages + Firefox on all Linux templates + standalones; Terminator as default terminal + in every Linux VM's App Menu
+│   ├── base.yml                 # Installs base packages + Firefox on all Linux templates + standalones; Terminator as default terminal + in every Linux VM's App Menu; bash dotfiles (shell role) in templates, AppVMs/DVMs and standalones
 │   ├── dom0.yml                 # Dom0: secure boot key management
 │   ├── llm.yml                  # LLM stack: template → DVM → DispVM → networking
 │   ├── ocr.yml                  # OCR stack: template → DVM → DispVM → networking
@@ -194,6 +197,7 @@ without removing the code.
     ├── common/                  # Shared tasks, listed first in every VM play: packages.yml (apt/dnf install), vm_type.yml (type-aware roles)
     ├── base_packages/           # htop + tmux + ... on any Linux VM (apt or dnf via ansible_os_family)
     ├── type_clipboard/          # Type-aware: xdotool clipboard typing (Ctrl + right-click menu, Ctrl+Alt+V) in every Linux template; nothing (AppVM)
+    ├── shell/                   # Type-aware: bash dotfiles from external/dotFiles/bash into /etc/skel (template) or the user's home (AppVM/DVM)
     ├── llm_template/            # NVIDIA drivers, CUDA, Ollama service + systemd overrides
     ├── llm_dvm_1/               # Qubes bind-dirs for /usr/share/ollama (model persistence)
     ├── llm_dvm_2/               # Pull Ollama models; create custom 32k/8k context variants

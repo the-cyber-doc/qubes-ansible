@@ -1,0 +1,14 @@
+---
+# Runs in the AppVM/DVM (selected by main.yml). Existing AppVMs never re-read
+# /etc/skel, so the bash dotfiles are copied into the user's home directly.
+- name: Copy bash dotfiles into the user's home
+  become: true
+  ansible.builtin.copy:
+    src: "bash/{{ item.name }}"
+    dest: "{{ vm_user_home }}/{{ item.name }}"
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ shell_bash_files }}"
+  loop_control:
+    label: "{{ item.name }}"

@@ -1,0 +1,12 @@
+---
+# Skeleton directory copied into the home of every AppVM created from a template
+shell_skel_dir: /etc/skel
+
+# Bash dotfiles deployed from files/bash (external/dotFiles/bash)
+shell_bash_files:
+  - name: .bashrc
+    mode: "0644"
+  - name: .bash_profile
+    mode: "0644"
+  - name: .git-prompt.sh
+    mode: "0755"
