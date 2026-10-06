@@ -1,0 +1,4 @@
+[submodule "external/dotFiles"]
+	path = external/dotFiles
+	url = https://github.com/the-cyber-doc/dotFiles.git
+	branch = master
