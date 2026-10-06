@@ -6,5 +6,5 @@
   vars:
     packages_upgrade: true
     packages_all: "{{ base_packages + base_packages_playbook_extra }}"
-    packages_debian: "{{ base_packages_debian }}"
-    packages_redhat: "{{ base_packages_redhat }}"
+    packages_debian: "{{ base_packages_debian + base_packages_playbook_extra_debian }}"
+    packages_redhat: "{{ base_packages_redhat + base_packages_playbook_extra_redhat }}"

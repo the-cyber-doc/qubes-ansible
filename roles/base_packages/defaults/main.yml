@@ -10,5 +10,8 @@ base_packages_debian:
 base_packages_redhat:
   - "{{ '7zip' if ansible_distribution_major_version | int >= 44 else '7z' }}"
 
-# Set from the playbook calling this role to add packages to every OS family.
+# Set from the playbook calling this role to add packages to every OS family,
+# or to one family only when the package name differs.
 base_packages_playbook_extra: []
+base_packages_playbook_extra_debian: []
+base_packages_playbook_extra_redhat: []
