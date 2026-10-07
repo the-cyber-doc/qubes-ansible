@@ -20,6 +20,7 @@
   roles:
     - role: common
     - role: base_packages
+    - role: shell
     - role: vpn
 
 - hosts: local
@@ -56,8 +57,16 @@
       command: qvm-prefs {{ host_vpn_dvm }} label blue
     - name: Set DVM network
       command: qvm-prefs {{ host_vpn_dvm }} netvm {{ netvm_native }}
+    - name: Set provide network
+      command: qvm-prefs {{ host_vpn_dvm }} provides_network true
     - name: Set as DispVM template
       command: qvm-prefs {{ host_vpn_dvm }} template_for_dispvms true
+    - name: Set service qubes-firewall
+      command: qvm-service {{ host_vpn_dvm }} qubes-firewall on
+    - name: Set service network-manager
+      command: qvm-service {{ host_vpn_dvm }} network-manager on
+    - name: Set service minimal-netvm
+      command: qvm-service {{ host_vpn_dvm }} minimal-netvm on
     - include_role:
         name: set_prefs
         apply:
@@ -75,6 +84,7 @@
     - vars/vpn.yml
   roles:
     - role: common
+    - role: shell
     - role: vpn
 
 - hosts: local
@@ -101,7 +111,7 @@
       failed_when: false
       changed_when: false
     - name: Create DispVM
-      command: qvm-create --class DispVM --label red --template {{ host_vpn_dvm }} {{ vpn_dispvm }}
+      command: qvm-create --class DispVM --label purple --template {{ host_vpn_dvm }} {{ vpn_dispvm }}
       when: vpn_dispvm_check.rc != 0
     - name: Set default DVM
       command: qvm-prefs {{ vpn_dispvm }} default_dispvm {{ host_vpn_dvm }}

@@ -1,8 +1,7 @@
 ---
-vpn_base_template: "fedora-{{ fedora_version }}-minimal"
+vpn_base_template: "fedora-{{ fedora_version }}-xfce"
 host_vpn_template: "vpn-template-fedora-{{ fedora_version }}"
 host_vpn_dvm: vpn-dvm
 vpn_dispvm: vpn-disp
-host_vpn_dvm_ch: vpn-ch-dvm
-vpn_dispvm_ch: vpn-ch-disp
+
 vpn_vcpus: 4

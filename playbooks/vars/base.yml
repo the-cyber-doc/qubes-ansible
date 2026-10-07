@@ -2,27 +2,3 @@
 # Added to the App Menu of every Linux VM (appsmenu_add role)
 base_appsmenu_applications:
   - terminator.desktop
-
-vm_resource_config:
-  - vm: data
-    vcpus: 6
-  - vm: disp-sys-vpn-proton-ch
-    maxmem: 2000
-    memory: 200
-    vcpus: 1
-  - vm: disp-sys-vpn-proton-fr
-    maxmem: 2000
-    memory: 200
-    vcpus: 1
-  - vm: personal
-    maxmem: 8000
-    memory: 800
-  - vm: windows_11_ltsc
-    maxmem: 0
-    memory: 8192
-  - vm: windows_11_ltsc_lightroom
-    maxmem: 0
-    memory: 8192
-  - vm: windows_11_ltsc_sketchup
-    maxmem: 0
-    memory: 8192

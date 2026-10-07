@@ -1,19 +1,17 @@
 ---
 # Runs in the AppVM/DVM (selected by main.yml).
-- name: Check if binds directory exists
+- name: Ensure autostart directory exists
   ansible.builtin.file:
-    path: "{{ binds_dir }}"
+    path: "{{ vpn_autostart_dir }}"
     state: directory
-    owner: root
-    group: root
-    mode: '0755'
-- name: Check if bind file exists
-  file:
-    path: "{{ binds_file }}"
-    state: touch
-- name: Set bind for /usr/share/ollama
-  lineinfile:
-    path: "{{ binds_file }}"
-    regexp: "ollama"
-    line: "binds+=( '/usr/share/ollama' )"
-    state: present
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"
+    mode: "0755"
+
+- name: Link Proton VPN .desktop into autostart
+  ansible.builtin.file:
+    src: "{{ vpn_proton_desktop_file }}"
+    dest: "{{ vpn_autostart_dir }}/{{ vpn_proton_desktop_file | basename }}"
+    state: link
+    owner: "{{ vm_user }}"
+    group: "{{ vm_group }}"

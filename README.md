@@ -89,12 +89,13 @@ output is parsed directly inside the controller process ? which this project run
 from Dom0. A compromised or malicious qube could exploit that to reach Dom0.
 
 `qubes_proxy` (set globally in `ansible.cfg`) closes that hole: instead of connecting
-directly, it proxies the connection through a fresh management disposable
-(`disp-mgmt-<template>`) based on the target's own template. A hostile response can
-at most compromise that disposable, not the controller. This requires the
-`qubes.AnsibleVM` qrexec service ? installed by the `qubes-ansible-vm` (Fedora) /
-`qubes-ansible` (Debian) package ? to be present in every template that will be
-targeted; `base.yml` bootstraps it automatically (see below).
+directly, it runs the play inside a fresh management disposable
+(`disp-mgmt-<target>`) started from the target's `management_dispvm` (by default the
+global `default-mgmt-dvm`), which then reaches the target over qrexec. A hostile
+response can at most compromise that disposable, not the controller. This requires the
+`qubes.AnsibleVM` qrexec service, installed by the `qubes-ansible-vm` package, in the
+template of the management disposable only; the targeted templates need nothing
+beyond Python.
 
 ### `host_` prefix convention
 
@@ -206,7 +207,7 @@ without removing the code.
     ├── secureboot/              # sbctl backup/restore scripts + kernel install hook
     ├── messenging/              # Signal + Chrome from their apt repos, Whatsie + Telegram via Snap; autostart symlinks
     ├── burp/                    # Type-aware: Burp Suite Community + Firefox cert tooling (template); proxy config + autostart session script (DVM)
-    ├── vpn/                     # Type-aware: Proton VPN app + AppIndicator extension (template); bind-dirs entry (DVM)
+    ├── vpn/                     # Type-aware: Proton VPN app + AppIndicator extension (template); Proton VPN app in autostart (DVM)
     ├── firefox/                 # Firefox install, policies, and skel profile
     ├── jdownloader2/            # Type-aware: Java in the template; JDownloader 2 into ~/jd2 + desktop entry in the AppVM/DVM
     ├── set_prefs/               # Reusable: set qrexec_timeout / maxmem / memory / vcpus on any VM
@@ -491,17 +492,6 @@ re-run at any time against already-running systems.
 # Or directly against the playbook (same effect)
 ./ansible-playbook.sh playbooks/base.yml
 ```
-
-Before touching any template over `connection: qubes`, `base.yml` first bootstraps
-the `qubes-ansible-vm` (Fedora) / `qubes-ansible` (Debian) package into every
-template that doesn't already have it. This package provides the `qubes.AnsibleVM`
-qrexec service that the `qubes_proxy` strategy (see below) needs to proxy a
-connection through a management disposable based on that template. The bootstrap
-itself runs over `connection: local` with raw `qvm-run` ? using `connection: qubes`
-here would be circular, since the management disposable it would need is based on
-the very template that doesn't have the service yet. Already-bootstrapped templates
-are skipped (network is only toggled on and the template only shut down for
-templates that actually needed the install).
 
 ### Run everything
 

@@ -1,4 +1,5 @@
 ---
+# Base config on all the templates
 - hosts: "templatevms"
   connection: qubes
   gather_facts: false
@@ -23,9 +24,7 @@
       become: yes
       when: ansible_os_family in ['Debian', 'RedHat']
 
-# AppVMs/DVMs (and standalones) already have a home, so /etc/skel changes never
-# reach them: the shell role copies the dotfiles into the home directly.
-# Named DispVMs are not targeted: their home comes from their DVM.
+# Base config on the AppVM, DVM and Standalone except Windows
 - hosts: "appvms:standalonevms:!windows_vms"
   connection: qubes
   gather_facts: false
@@ -51,18 +50,6 @@
         target_vm: "{{ item }}"
         vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
       loop: "{{ groups['appvms'] + groups['templatevms'] + groups['standalonevms'] + groups['windows_vms'] + groups['disp_vms']}}"
-
-    - include_role:
-        name: set_prefs
-        apply:
-          tags: [prefs, base]
-      tags: [prefs]
-      vars:
-        target_vm: "{{ item.vm }}"
-        vm_maxmem: "{{ item.maxmem | default('') }}"
-        vm_memory: "{{ item.memory | default('') }}"
-        vm_vcpus: "{{ item.vcpus | default('') }}"
-      loop: "{{ vm_resource_config }}"
 
     - include_role:
         name: appsmenu_add

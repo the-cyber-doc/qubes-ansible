@@ -12,13 +12,24 @@
 - name: Install Proton repository
   ansible.builtin.command:
     cmd: dnf install -y /tmp/proton_repo.rpm
-- name: Upgrade system and install Proton App
-  ansible.builtin.include_role:
-    name: common
-    tasks_from: packages
-  vars:
-    packages_upgrade: true
-    packages_redhat: "{{ vpn_proton_packages_redhat }}"
+# proton-vpn-daemon's %posttrans ends with "systemctl start
+# me.proton.vpn.split_tunneling.service", which fails in the template: dnf then
+# reports an error on the first install although every package is installed.
+# The rescue accepts that case and still fails if a package is really missing.
+- name: Update packages and install Proton App
+  block:
+    - name: Install Proton App
+      ansible.builtin.include_role:
+        name: common
+        tasks_from: packages
+      vars:
+        packages_upgrade: true
+        packages_redhat: "{{ vpn_proton_packages_redhat }}"
+  rescue:
+    - name: Check the Proton App packages are installed despite the dnf error
+      ansible.builtin.command:
+        cmd: "rpm -q {{ vpn_proton_packages_redhat | join(' ') }}"
+      changed_when: false
 - name: Deploy dconf drop-in to enable AppIndicator extension
   ansible.builtin.copy:
     src: 00-appindicator

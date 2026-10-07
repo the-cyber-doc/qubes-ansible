@@ -8,3 +8,9 @@ vpn_packages_redhat:
 # Installed after the Proton repository is added
 vpn_proton_packages_redhat:
   - proton-vpn-gnome-desktop
+
+# VM side (vm.yml)
+# Desktop entry shipped by proton-vpn-gnome-desktop, linked into the user's
+# autostart directory so the Proton VPN app starts with the session
+vpn_proton_desktop_file: /usr/share/applications/proton.vpn.app.gtk.desktop
+vpn_autostart_dir: "{{ vm_user_home }}/.config/autostart"
