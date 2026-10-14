@@ -1,0 +1,33 @@
+#!/bin/bash
+# {{ ansible_managed }}
+# Prints the Proton Mail Bridge and Thunderbird state as entries for
+# playbooks/group_vars/all/secrets.yml, so the proton_bridge role can restore it.
+# Run it once you are logged in to the Bridge and Thunderbird has saved the
+# Bridge password and accepted its certificate. Quit Thunderbird first so
+# key4.db and logins.json are consistent.
+set -euo pipefail
+
+bridge_dir={{ proton_bridge_config_dir | quote }}
+profile_dir={{ proton_bridge_thunderbird_profile_dir | quote }}
+
+if pgrep -x thunderbird >/dev/null; then
+    echo "Quit Thunderbird first" >&2
+    exit 1
+fi
+
+key=$(secret-tool lookup server {{ proton_bridge_keychain_server | quote }} username {{ proton_bridge_keychain_username | quote }} || true)
+if [ -z "$key" ]; then
+    echo "No Bridge vault key in the keyring: log in to the Bridge first" >&2
+    exit 1
+fi
+
+echo "proton_bridge_vault_key: '$key'"
+echo "proton_bridge_vault_enc_b64: '$(base64 -w0 "$bridge_dir/vault.enc")'"
+for entry in key4.db:key4_db logins.json:logins_json cert_override.txt:cert_override; do
+    file="$profile_dir/${entry%%:*}"
+    if [ -f "$file" ]; then
+        echo "proton_bridge_thunderbird_${entry##*:}_b64: '$(base64 -w0 "$file")'"
+    else
+        echo "# $file not found: proton_bridge_thunderbird_${entry##*:}_b64 skipped" >&2
+    fi
+done

@@ -1,0 +1,133 @@
+---
+# Runs in the AppVM/DVM (selected by main.yml).
+#
+# Bridge: its whole state (logged-in sessions, generated IMAP/SMTP password, TLS
+# certificate) is vault.enc, encrypted with a key kept in the GNOME keyring. Both
+# are restored from the vault vars written by proton-bridge-export.sh, so the
+# Bridge password and certificate stay the same across rebuilds. Without those
+# vars an empty, unencrypted keyring is created and you log in once in the Bridge.
+#
+# Thunderbird: the profile and its accounts are built from proton_bridge_accounts;
+# only its saved password (key4.db + logins.json) and the accepted Bridge
+# certificate (cert_override.txt) come from the vault, when defined.
+- name: Create the Proton Mail Bridge and keyring directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0700"
+  loop:
+    - "{{ proton_bridge_config_dir }}"
+    - "{{ proton_bridge_keyrings_dir }}"
+
+# Pins the helper matching the keyring item templated in Default.keyring.j2
+- name: Make the Bridge keep its vault key in the GNOME keyring
+  ansible.builtin.copy:
+    content: "{{ {'Helper': 'secret-service-dbus', 'DisableTest': false} | to_nice_json(indent=2) }}"
+    dest: "{{ proton_bridge_config_dir }}/keychain.json"
+    mode: "0600"
+    force: false
+
+- name: Check whether the Bridge vault exists
+  ansible.builtin.stat:
+    path: "{{ proton_bridge_config_dir }}/vault.enc"
+  register: _proton_bridge_vault_stat
+
+# The running Bridge rewrites vault.enc (refreshed session tokens): an existing
+# vault is only replaced on request
+- name: Decide whether to restore the Bridge vault
+  ansible.builtin.set_fact:
+    _proton_bridge_restore_vault: >-
+      {{ proton_bridge_vault_key is defined
+         and proton_bridge_vault_enc_b64 is defined
+         and (not _proton_bridge_vault_stat.stat.exists or proton_bridge_force_restore | bool) }}
+
+- name: Make Default the default keyring
+  ansible.builtin.copy:
+    content: "Default"
+    dest: "{{ proton_bridge_keyrings_dir }}/default"
+    mode: "0600"
+
+- name: Install the keyring with the Bridge vault key
+  ansible.builtin.template:
+    src: Default.keyring.j2
+    dest: "{{ proton_bridge_keyrings_dir }}/Default.keyring"
+    mode: "0600"
+    force: "{{ _proton_bridge_restore_vault | bool }}"
+  no_log: true
+
+- name: Restore the Bridge vault
+  ansible.builtin.shell:
+    cmd: "umask 077 && base64 -d > {{ (proton_bridge_config_dir ~ '/vault.enc') | quote }}"
+    stdin: "{{ proton_bridge_vault_enc_b64 }}"
+  when: _proton_bridge_restore_vault | bool
+  no_log: true
+
+#
+# Thunderbird profile
+#
+- name: Create the Thunderbird profile directory
+  ansible.builtin.file:
+    path: "{{ proton_bridge_thunderbird_profile_dir }}"
+    state: directory
+    mode: "0700"
+
+# Only written once: Thunderbird adds its own install sections afterwards
+- name: Register the Thunderbird profile
+  ansible.builtin.template:
+    src: profiles.ini.j2
+    dest: "{{ proton_bridge_thunderbird_dir }}/profiles.ini"
+    mode: "0644"
+    force: false
+
+- name: Configure the Bridge accounts in Thunderbird
+  ansible.builtin.template:
+    src: user.js.j2
+    dest: "{{ proton_bridge_thunderbird_profile_dir }}/user.js"
+    mode: "0600"
+
+- name: Restore the Thunderbird saved password and Bridge certificate exception
+  ansible.builtin.shell:
+    cmd: "umask 077 && base64 -d > {{ (proton_bridge_thunderbird_profile_dir ~ '/' ~ item.file) | quote }}"
+    stdin: "{{ item.b64 }}"
+    creates: "{{ omit if proton_bridge_force_restore | bool else proton_bridge_thunderbird_profile_dir ~ '/' ~ item.file }}"
+  loop:
+    - file: key4.db
+      b64: "{{ proton_bridge_thunderbird_key4_db_b64 | default('') }}"
+    - file: logins.json
+      b64: "{{ proton_bridge_thunderbird_logins_json_b64 | default('') }}"
+    - file: cert_override.txt
+      b64: "{{ proton_bridge_thunderbird_cert_override_b64 | default('') }}"
+  loop_control:
+    label: "{{ item.file }}"
+  when: item.b64 | length > 0
+  no_log: true
+
+#
+# Scripts and autostart
+#
+- name: Create the local bin and autostart directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ proton_bridge_bin_dir }}"
+    - "{{ vm_autostart_dir }}"
+
+- name: Install the Thunderbird launcher and the vault export script
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ proton_bridge_bin_dir }}/{{ item }}"
+    mode: "0755"
+  loop:
+    - start-thunderbird.sh
+    - proton-bridge-export.sh
+
+- name: Start the Bridge and Thunderbird with the session
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ vm_autostart_dir }}/{{ item }}"
+    mode: "0644"
+  loop:
+    - protonmail-bridge.desktop
+    - thunderbird-email.desktop

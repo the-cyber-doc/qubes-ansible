@@ -1,0 +1,76 @@
+---
+#
+# Template
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/email.yml
+  tasks:
+    - ansible.builtin.include_tasks: tasks/clone_template.yml
+      vars:
+        clone_src: "{{ email_base_template }}"
+        clone_dest: "{{ host_email_template }}"
+
+- hosts: "{{ host_email_template | default([]) }}"
+  become: yes
+  connection: qubes
+  vars_files:
+    - vars/email.yml
+  roles:
+    - role: common
+    - role: base_packages
+    - role: shell
+    - role: proton_bridge
+
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/email.yml
+  tasks:
+    - name: Shutdown the email template
+      qubesos:
+        guest: "{{ host_email_template }}"
+        state: shutdown
+    - name: Remove the network
+      ansible.builtin.command: qvm-prefs --default {{ host_email_template }} netvm
+
+#
+# AppVM
+#
+- hosts: local
+  connection: local
+  vars_files:
+    - vars/email.yml
+  tasks:
+    - name: Check if VM exists
+      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_email_vm }}$'"
+      register: email_vm_check
+      failed_when: false
+      changed_when: false
+    - name: Create VM
+      ansible.builtin.command: qvm-create --class AppVM --label {{ email_label }} --template {{ host_email_template }} {{ host_email_vm }}
+      when: email_vm_check.rc != 0
+    - name: Set VM template
+      ansible.builtin.command: qvm-prefs {{ host_email_vm }} template {{ host_email_template }}
+    - name: Set VM label
+      ansible.builtin.command: qvm-prefs {{ host_email_vm }} label {{ email_label }}
+    - name: Set VM network
+      ansible.builtin.command: qvm-prefs {{ host_email_vm }} netvm {{ netvm_default }}
+    - ansible.builtin.include_role:
+        name: set_prefs
+        apply:
+          tags: [prefs, email]
+      tags: [prefs]
+      vars:
+        target_vm: "{{ host_email_vm }}"
+        vm_qrexec_timeout: "{{ qrexec_timeout_default }}"
+
+- hosts: "{{ host_email_vm | default([]) }}"
+  connection: qubes
+  vars_files:
+    - vars/email.yml
+  roles:
+    - role: common
+    - role: shell
+    - role: proton_bridge

@@ -1,0 +1,36 @@
+---
+# Runs in the TemplateVM (selected by main.yml).
+- name: Import the Proton Mail Bridge RPM signing key
+  ansible.builtin.rpm_key:
+    key: "{{ proton_bridge_rpm_key_url }}"
+    state: present
+  when: ansible_facts.os_family == "RedHat"
+
+- name: Install Proton Mail Bridge
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: packages
+  vars:
+    packages_all: "{{ proton_bridge_packages }}"
+    packages_redhat: "{{ proton_bridge_packages_redhat }}"
+    packages_debian: "{{ proton_bridge_packages_debian }}"
+
+# Same reason as in the firefox role: force every launcher onto the profile built
+# by vm.yml instead of a per-install "dedicated" profile. Fedora names the
+# launcher org.mozilla.Thunderbird.desktop, older releases thunderbird.desktop.
+- name: Find Thunderbird desktop files
+  ansible.builtin.find:
+    paths: /usr/share/applications
+    patterns:
+      - "*thunderbird*.desktop"
+      - "*Thunderbird*.desktop"
+  register: _proton_bridge_thunderbird_desktop_files
+
+- name: Force Thunderbird launchers to use the configured profile
+  ansible.builtin.replace:
+    path: "{{ item.path }}"
+    regexp: '^Exec=(?!.* -P )(\S+)(.*)$'
+    replace: 'Exec=\1 -P {{ proton_bridge_thunderbird_profile }}\2'
+  loop: "{{ _proton_bridge_thunderbird_desktop_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"

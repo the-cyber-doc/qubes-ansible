@@ -1,0 +1,9 @@
+#!/bin/bash
+# {{ ansible_managed }}
+# Waits for the Proton Mail Bridge IMAP listener, so Thunderbird's first mail
+# check does not fail, then opens Thunderbird on the managed profile.
+for _ in $(seq 1 {{ proton_bridge_wait_seconds }}); do
+    (exec 3<>/dev/tcp/127.0.0.1/{{ proton_bridge_imap_port }}) 2>/dev/null && break
+    sleep 1
+done
+exec thunderbird -P {{ proton_bridge_thunderbird_profile }} "$@"

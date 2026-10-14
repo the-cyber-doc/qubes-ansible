@@ -34,3 +34,6 @@
 
 - import_playbook: playbooks/open_with.yml
   tags: [open-with]
+
+- import_playbook: playbooks/email.yml
+  tags: [email]
