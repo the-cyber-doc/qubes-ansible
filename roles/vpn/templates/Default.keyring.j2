@@ -1,0 +1,50 @@
+[keyring]
+display-name=Default
+ctime=1791403904
+mtime=0
+lock-on-idle=false
+lock-after=false
+
+[2]
+item-type=0
+display-name=Password for 'proton-sso-accounts' on 'Proton'
+secret=["{{ proton_vpn_username }}"]
+mtime=1791403927
+ctime=1791403927
+
+[2:attribute0]
+name=application
+type=string
+value=Python keyring library
+
+[2:attribute1]
+name=service
+type=string
+value=Proton
+
+[2:attribute2]
+name=username
+type=string
+value=proton-sso-accounts
+
+[1]
+item-type=0
+display-name=Password for '{{ proton_vpn_sso_username }}' on 'Proton'
+secret={{ proton_vpn_secret }}
+mtime=1791403992
+ctime=1791403927
+
+[1:attribute0]
+name=application
+type=string
+value=Python keyring library
+
+[1:attribute1]
+name=service
+type=string
+value=Proton
+
+[1:attribute2]
+name=username
+type=string
+value={{ proton_vpn_sso_username }}
