@@ -1,0 +1,57 @@
+// {{ ansible_managed }}
+// Read by Thunderbird at every start: these prefs override the ones in prefs.js.
+
+// No first-run noise
+user_pref("mail.shell.checkDefaultClient", false);
+user_pref("mail.rights.version", 1);
+user_pref("mailnews.start_page.enabled", false);
+user_pref("mail.provider.suppress_dialog_on_startup", true);
+user_pref("datareporting.policy.dataSubmissionEnabled", false);
+user_pref("datareporting.healthreport.uploadEnabled", false);
+user_pref("toolkit.telemetry.enabled", false);
+{% if proton_bridge_accounts | length > 0 %}
+{% set n = proton_bridge_accounts | length %}
+{% set local = n + 1 %}
+
+// Accounts on the Proton Mail Bridge (IMAP 127.0.0.1:{{ proton_bridge_imap_port }}, SMTP 127.0.0.1:{{ proton_bridge_smtp_port }}, STARTTLS)
+user_pref("mail.accountmanager.accounts", "{% for i in range(1, local + 1) %}account{{ i }}{{ ',' if not loop.last }}{% endfor %}");
+user_pref("mail.accountmanager.defaultaccount", "account1");
+user_pref("mail.accountmanager.localfoldersserver", "server{{ local }}");
+user_pref("mail.smtpservers", "{% for i in range(1, n + 1) %}smtp{{ i }}{{ ',' if not loop.last }}{% endfor %}");
+user_pref("mail.smtp.defaultserver", "smtp1");
+{% for account in proton_bridge_accounts %}
+{% set i = loop.index %}
+
+// {{ account.email }}
+user_pref("mail.account.account{{ i }}.identities", "id{{ i }}");
+user_pref("mail.account.account{{ i }}.server", "server{{ i }}");
+user_pref("mail.identity.id{{ i }}.fullName", {{ account.name | default(account.email) | to_json }});
+user_pref("mail.identity.id{{ i }}.useremail", {{ account.email | to_json }});
+user_pref("mail.identity.id{{ i }}.smtpServer", "smtp{{ i }}");
+user_pref("mail.identity.id{{ i }}.valid", true);
+user_pref("mail.server.server{{ i }}.type", "imap");
+user_pref("mail.server.server{{ i }}.name", {{ account.email | to_json }});
+user_pref("mail.server.server{{ i }}.hostname", "127.0.0.1");
+user_pref("mail.server.server{{ i }}.port", {{ proton_bridge_imap_port }});
+user_pref("mail.server.server{{ i }}.socketType", 2);
+user_pref("mail.server.server{{ i }}.authMethod", 3);
+user_pref("mail.server.server{{ i }}.userName", {{ account.email | to_json }});
+user_pref("mail.server.server{{ i }}.directory-rel", "[ProfD]ImapMail/account{{ i }}");
+user_pref("mail.server.server{{ i }}.login_at_startup", true);
+user_pref("mail.server.server{{ i }}.check_new_mail", true);
+user_pref("mail.smtpserver.smtp{{ i }}.description", {{ ('Proton Mail Bridge (' ~ account.email ~ ')') | to_json }});
+user_pref("mail.smtpserver.smtp{{ i }}.hostname", "127.0.0.1");
+user_pref("mail.smtpserver.smtp{{ i }}.port", {{ proton_bridge_smtp_port }});
+user_pref("mail.smtpserver.smtp{{ i }}.try_ssl", 2);
+user_pref("mail.smtpserver.smtp{{ i }}.authMethod", 3);
+user_pref("mail.smtpserver.smtp{{ i }}.username", {{ account.email | to_json }});
+{% endfor %}
+
+// Local Folders
+user_pref("mail.account.account{{ local }}.server", "server{{ local }}");
+user_pref("mail.server.server{{ local }}.type", "none");
+user_pref("mail.server.server{{ local }}.name", "Local Folders");
+user_pref("mail.server.server{{ local }}.hostname", "Local Folders");
+user_pref("mail.server.server{{ local }}.userName", "nobody");
+user_pref("mail.server.server{{ local }}.directory-rel", "[ProfD]Mail/Local Folders");
+{% endif %}

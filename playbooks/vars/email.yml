@@ -1,0 +1,10 @@
+---
+email_base_template: "fedora-{{ fedora_version }}-xfce"
+host_email_template: "email-template-fedora-{{ fedora_version }}"
+host_email_vm: email
+
+email_label: blue
+
+# Installed by base_packages on top of the default packages
+base_packages_playbook_extra:
+  - thunderbird

@@ -22,6 +22,8 @@ Specifically it automates:
 - **sys-gpu** ? a shared GPU DispVM template for workloads that need the card but
   not Ollama
 - **Messaging** ? Signal (official apt repo), WhatsApp (Whatsie) and Telegram via Snap, and Chrome in an isolated Debian AppVM
+- **Email** — a Fedora AppVM with Thunderbird reading Proton Mail through the Proton Mail
+  Bridge; the Bridge login and the Thunderbird accounts are restored from the vault
 - **Burp** ? a disposable web-testing VM: Burp Suite Community auto-starts its proxy and
   Firefox is pre-configured to route its traffic through Burp; a fresh disposable is spawned
   on every launch; JDownloader 2 is also installed
@@ -177,6 +179,7 @@ without removing the code.
 │   ├── ocr.yml                  # OCR stack: template → DVM → DispVM → networking
 │   ├── sys_gpu.yml              # sys-gpu: template → DVM → DispVM
 │   ├── messenging.yml           # Messaging: template packages + AppVM autostart
+│   ├── email.yml                # Email: Fedora template (Thunderbird + Proton Mail Bridge) → AppVM
 │   ├── burp.yml                 # Burp: template (Burp + JDownloader 2 + Firefox proxy) → disposable template
 │   ├── open_with.yml            # Open-with: Debian + Fedora template → DVM → DispVM (GIMP, LibreOffice, Firefox)
 │   │
@@ -188,6 +191,7 @@ without removing the code.
 │   │   ├── ocr.yml              # host_ocr_template, host_ocr_dvm, ocr_tcp_port …
 │   │   ├── sys_gpu.yml          # host_sys_gpu_template, gpu_pci_id_vga, gpu_pci_id_audio …
 │   │   ├── messenging.yml       # host_messenging_template, host_messenging_vm …
+│   │   ├── email.yml            # host_email_template, host_email_vm, email_label …
 │   │   ├── burp.yml             # host_burp_template, host_burp_dvm, burp_dispvm, burp_proxy_port …
 │   │   └── open_with.yml        # host_open_with_{template,dvm}_{debian,fedora}, open_with_builds …
 │   │
@@ -208,6 +212,7 @@ without removing the code.
     ├── messenging/              # Signal + Chrome from their apt repos, Whatsie + Telegram via Snap; autostart symlinks
     ├── burp/                    # Type-aware: Burp Suite Community + Firefox cert tooling (template); proxy config + autostart session script (DVM)
     ├── vpn/                     # Type-aware: Proton VPN app + AppIndicator extension (template); Proton VPN app in autostart (DVM)
+    ├── proton_bridge/           # Type-aware: Proton Mail Bridge RPM + Thunderbird launchers on the managed profile (template); Bridge vault + keyring restore, Thunderbird profile and accounts, autostart (AppVM)
     ├── firefox/                 # Firefox install, policies, and skel profile
     ├── jdownloader2/            # Type-aware: Java in the template; JDownloader 2 into ~/jd2 + desktop entry in the AppVM/DVM
     ├── set_prefs/               # Reusable: set qrexec_timeout / maxmem / memory / vcpus on any VM
@@ -306,6 +311,38 @@ Where `<amo-slug>` is the extension's URL slug on
 extension's AMO page). Once added, `my_extension` becomes a valid key in any
 playbook's `firefox_extra_extensions` list.
 
+### Email: Proton Mail Bridge and Thunderbird
+
+The `email` AppVM runs the Proton Mail Bridge and Thunderbird, both started with the
+session. The two halves are handled differently:
+
+- **Thunderbird is built from scratch.** The role writes a dedicated profile
+  (`~/.thunderbird/email`) and a `user.js` with one IMAP (`127.0.0.1:1143`) and SMTP
+  (`127.0.0.1:1025`) account, both STARTTLS, per entry of `proton_bridge_accounts`
+  in the vault. `user.js` is re-applied at every start, so these accounts are
+  managed by Ansible, not in Thunderbird's settings.
+- **The Bridge is restored, not logged in.** A Bridge login needs the password, 2FA
+  and sometimes a captcha, and every new login generates a new IMAP/SMTP password
+  and TLS certificate. Instead, the role restores the Bridge state: `vault.enc`
+  (sessions, IMAP/SMTP password, certificate) and its key, kept in an unencrypted
+  GNOME keyring as for the VPN. Both come from the vault and are only written when
+  `vault.enc` is missing (or with `-e proton_bridge_force_restore=true`).
+
+First run, then saving the state into the vault:
+
+1. Add `proton_bridge_accounts` to the vault and run `--tags email`.
+2. In the `email` AppVM, log in to the Bridge, start Thunderbird, enter the Bridge
+   password shown by the Bridge (tick *Use Password Manager*) and accept its
+   certificate.
+3. Quit Thunderbird and run `~/.local/bin/proton-bridge-export.sh`: it prints the
+   `proton_bridge_vault_*` and `proton_bridge_thunderbird_*` entries to paste into
+   `ansible-vault edit playbooks/group_vars/all/secrets.yml`.
+
+A rebuilt `email` AppVM then starts logged in, with Thunderbird ready. The Bridge
+keeps refreshing its session tokens, so a restore from an old export may ask you to
+log in to the Bridge again; the account stays in the vault with its IMAP/SMTP
+password, so Thunderbird should need no change. Do not run the Bridge from the same export in two VMs at once.
+
 ### LLM networking topology
 
 ```
@@ -403,6 +440,7 @@ connecting to any VM. Run this after every change:
 ./ansible-playbook.sh playbooks/ocr.yml --syntax-check
 ./ansible-playbook.sh playbooks/sys_gpu.yml --syntax-check
 ./ansible-playbook.sh playbooks/messenging.yml --syntax-check
+./ansible-playbook.sh playbooks/email.yml --syntax-check
 ./ansible-playbook.sh playbooks/burp.yml --syntax-check
 ./ansible-playbook.sh playbooks/open_with.yml --syntax-check
 ./ansible-playbook.sh playbooks/base.yml --syntax-check
@@ -448,6 +486,9 @@ Always use `./ansible-playbook.sh` ? never `ansible-playbook` directly.
 
 # Provision the messaging AppVM
 ./ansible-playbook.sh site.yml --tags messenging
+
+# Provision the email AppVM (Thunderbird + Proton Mail Bridge)
+./ansible-playbook.sh site.yml --tags email
 
 # Provision the Burp disposable web-testing template (Burp + Firefox proxy)
 ./ansible-playbook.sh site.yml --tags burp

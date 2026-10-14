@@ -1,0 +1,44 @@
+---
+# Template side (template.yml)
+
+proton_bridge_rpm_url: https://proton.me/download/bridge/protonmail-bridge.x86_64.rpm
+proton_bridge_rpm_key_url: https://proton.me/download/bridge/bridge_pubkey.gpg
+
+proton_bridge_packages: []
+# gnome-keyring holds the key of the Bridge vault, libsecret provides secret-tool
+# for proton-bridge-export.sh. dnf installs the Bridge straight from its URL.
+proton_bridge_packages_redhat:
+  - gnome-keyring
+  - libsecret
+  - "{{ proton_bridge_rpm_url }}"
+proton_bridge_packages_debian: []
+
+# VM side (vm.yml)
+
+# Bridge settings directory: vault.enc (accounts, sessions, IMAP/SMTP password,
+# TLS certificate) and keychain.json (keychain helper used for the vault key)
+proton_bridge_config_dir: "{{ vm_user_home }}/.config/protonmail/bridge-v3"
+proton_bridge_keyrings_dir: "{{ vm_user_home }}/.local/share/keyrings"
+# Keychain item holding the base64 vault key (see pkg/keychain in proton-bridge)
+proton_bridge_keychain_server: protonmail/bridge-v3/users/bridge-vault-key
+proton_bridge_keychain_username: bridge-vault-key
+
+proton_bridge_imap_port: 1143
+proton_bridge_smtp_port: 1025
+
+# Restore vault.enc, the keyring and the Thunderbird files from the vault vars
+# even when they already exist in the VM (normally only restored when missing)
+proton_bridge_force_restore: false
+
+# Thunderbird profile built by the role, opened by every Thunderbird launcher
+proton_bridge_thunderbird_profile: email
+proton_bridge_thunderbird_dir: "{{ vm_user_home }}/.thunderbird"
+proton_bridge_thunderbird_profile_dir: "{{ proton_bridge_thunderbird_dir }}/{{ proton_bridge_thunderbird_profile }}"
+
+# One IMAP/SMTP account per Proton account logged into the Bridge, set in
+# secrets.yml: [{email: me@proton.me, name: "My Name"}]
+proton_bridge_accounts: []
+
+proton_bridge_bin_dir: "{{ vm_user_home }}/.local/bin"
+# Seconds start-thunderbird.sh waits for the Bridge IMAP port before opening Thunderbird
+proton_bridge_wait_seconds: 120

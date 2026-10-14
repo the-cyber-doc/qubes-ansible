@@ -1,0 +1,30 @@
+[keyring]
+display-name=Default
+ctime=0
+mtime=0
+lock-on-idle=false
+lock-after=false
+{% if proton_bridge_vault_key is defined %}
+
+[1]
+item-type=0
+display-name={{ proton_bridge_keychain_server }}
+secret={{ proton_bridge_vault_key }}
+mtime=0
+ctime=0
+
+[1:attribute0]
+name=label
+type=string
+value=Proton Mail Bridge Credentials
+
+[1:attribute1]
+name=server
+type=string
+value={{ proton_bridge_keychain_server }}
+
+[1:attribute2]
+name=username
+type=string
+value={{ proton_bridge_keychain_username }}
+{% endif %}
