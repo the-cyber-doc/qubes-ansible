@@ -1,16 +1,27 @@
 ---
-proton_vpn_repo_url: "https://repo.protonvpn.com/fedora-{{ fedora_version }}-stable/protonvpn-stable-release/protonvpn-stable-release-1.0.4-1.noarch.rpm"
+#proton_vpn_repo_url: "https://repo.protonvpn.com/fedora-{{ fedora_version }}-stable/protonvpn-stable-release/protonvpn-stable-release-1.0.4-1.noarch.rpm"
+proton_vpn_repo_url_redhat: "https://repo.protonvpn.com/fedora-{{ fedora_version }}-stable"
+proton_vpn_repo_url_debian: "https://repo.protonvpn.com/debian"
+proton_vpn_keyring_debian: /etc/apt/keyrings/protonvpn.asc
 
+vpn_packages:
+  - proton-vpn-cli
+  - proton-vpn-gnome-desktop
 vpn_packages_redhat:
   - libappindicator-gtk3
   - gnome-shell-extension-appindicator
   - gnome-extensions-app
-# Installed after the Proton repository is added
-vpn_proton_packages_redhat:
-  - proton-vpn-gnome-desktop
+vpn_packages_debian: []
 
 # VM side (vm.yml)
-# Desktop entry shipped by proton-vpn-gnome-desktop, linked into the user's
-# autostart directory so the Proton VPN app starts with the session
+
+# Desktop entry shipped by proton-vpn-gnome-desktop
 vpn_proton_desktop_file: /usr/share/applications/proton.vpn.app.gtk.desktop
-vpn_autostart_dir: "{{ vm_user_home }}/.config/autostart"
+
+vpn_proton_config_dir: "{{ vm_user_home }}/.config/Proton/VPN"
+keyrings_dir: "{{ vm_user_home }}/.local/share/keyrings"
+
+vpn_firewall_killswitch: "nft add rule qubes custom-forward oifname eth0 counter drop; nft add rule ip6 qubes custom-forward oifname eth0 counter drop;"
+
+# Terminator
+vpn_terminator_desktop_file: /usr/share/applications/terminator.desktop

@@ -1,8 +1,12 @@
 ---
-burp_base_template: "debian-{{ debian_version }}"
-host_burp_template: burp-template
+burp_base_template: "debian-{{ debian_version }}-xfce"
+host_burp_template: "burp-template-debian-{{ debian_version }}"
 host_burp_dvm: burp-dvm
 burp_memory: 4000
 burp_maxmem: 4000
 burp_private_storage: 100GiB
 burp_proxy_port: 8080
+
+# Installed by base_packages on top of its own list
+base_packages_playbook_extra:
+  - ffmpeg

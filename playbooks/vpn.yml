@@ -7,7 +7,7 @@
   vars_files:
     - vars/vpn.yml
   tasks:
-    - include_tasks: tasks/clone_template.yml
+    - ansible.builtin.include_tasks: tasks/clone_template.yml
       vars:
         clone_src: "{{ vpn_base_template }}"
         clone_dest: "{{ host_vpn_template }}"
@@ -33,7 +33,7 @@
         guest: "{{ host_vpn_template }}"
         state: shutdown
     - name: Remove the network
-      command: qvm-prefs {{ host_vpn_template }} netvm ''
+      ansible.builtin.command: qvm-prefs --default {{ host_vpn_template }} netvm
     - name: Stop here
       ansible.builtin.meta: end_play
 
@@ -46,28 +46,28 @@
     - vars/vpn.yml
   tasks:
     - name: Check if DVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_vpn_dvm }}$'"
+      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w '{{ host_vpn_dvm }}$'"
       register: vpn_dvm_check
       failed_when: false
       changed_when: false
     - name: Create DVM
-      command: qvm-create --class AppVM --label blue --template {{ host_vpn_template }} {{ host_vpn_dvm }}
+      ansible.builtin.command: qvm-create --class AppVM --label blue --template {{ host_vpn_template }} {{ host_vpn_dvm }}
       when: vpn_dvm_check.rc != 0
     - name: Set DVM label
-      command: qvm-prefs {{ host_vpn_dvm }} label blue
+      ansible.builtin.command: qvm-prefs {{ host_vpn_dvm }} label blue
     - name: Set DVM network
-      command: qvm-prefs {{ host_vpn_dvm }} netvm {{ netvm_native }}
+      ansible.builtin.command: qvm-prefs {{ host_vpn_dvm }} netvm {{ netvm_native }}
     - name: Set provide network
-      command: qvm-prefs {{ host_vpn_dvm }} provides_network true
+      ansible.builtin.command: qvm-prefs {{ host_vpn_dvm }} provides_network true
     - name: Set as DispVM template
-      command: qvm-prefs {{ host_vpn_dvm }} template_for_dispvms true
+      ansible.builtin.command: qvm-prefs {{ host_vpn_dvm }} template_for_dispvms true
     - name: Set service qubes-firewall
-      command: qvm-service {{ host_vpn_dvm }} qubes-firewall on
+      ansible.builtin.command: qvm-service {{ host_vpn_dvm }} qubes-firewall on
     - name: Set service network-manager
-      command: qvm-service {{ host_vpn_dvm }} network-manager on
+      ansible.builtin.command: qvm-service {{ host_vpn_dvm }} network-manager on
     - name: Set service minimal-netvm
-      command: qvm-service {{ host_vpn_dvm }} minimal-netvm on
-    - include_role:
+      ansible.builtin.command: qvm-service {{ host_vpn_dvm }} minimal-netvm on
+    - ansible.builtin.include_role:
         name: set_prefs
         apply:
           tags: [prefs, vpn]
@@ -78,7 +78,6 @@
         vm_vcpus: "{{ vpn_vcpus }}"
 
 - hosts: "{{ host_vpn_dvm | default([]) }}"
-  become: yes
   connection: qubes
   vars_files:
     - vars/vpn.yml
@@ -106,20 +105,22 @@
     - vars/vpn.yml
   tasks:
     - name: Check if DispVM exists
-      shell: "qvm-ls --raw-data --fields name | grep -w '{{ vpn_dispvm }}$'"
+      ansible.builtin.shell: "qvm-ls --raw-data --fields name | grep -w '{{ vpn_dispvm }}$'"
       register: vpn_dispvm_check
       failed_when: false
       changed_when: false
     - name: Create DispVM
-      command: qvm-create --class DispVM --label purple --template {{ host_vpn_dvm }} {{ vpn_dispvm }}
+      ansible.builtin.command: qvm-create --class DispVM --label purple --template {{ host_vpn_dvm }} {{ vpn_dispvm }}
       when: vpn_dispvm_check.rc != 0
     - name: Set default DVM
-      command: qvm-prefs {{ vpn_dispvm }} default_dispvm {{ host_vpn_dvm }}
+      ansible.builtin.command: qvm-prefs {{ vpn_dispvm }} default_dispvm {{ host_vpn_dvm }}
     - name: Set label
-      command: qvm-prefs {{ vpn_dispvm }} label red
+      ansible.builtin.command: qvm-prefs {{ vpn_dispvm }} label purple
     - name: Set network
-      command: qvm-prefs {{ vpn_dispvm }} netvm {{ netvm_native }}
-    - include_role:
+      ansible.builtin.command: qvm-prefs {{ vpn_dispvm }} netvm {{ netvm_native }}
+    - name: Set autostart
+      ansible.builtin.command: qvm-prefs {{ vpn_dispvm }} autostart true
+    - ansible.builtin.include_role:
         name: set_prefs
         apply:
           tags: [prefs, vpn]

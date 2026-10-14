@@ -18,10 +18,11 @@ vm_user: user
 vm_group: user
 vm_user_home: "/home/{{ vm_user }}"
 vm_user_documents: "/home/{{ vm_user }}/Documents"
+vm_autostart_dir: "{{ vm_user_home }}/.config/autostart"
 
 # Network
 netvm_native: sys-firewall
-netvm_default: disp-sys-vpn-proton-ch
+netvm_default: vpn-disp
 
 # VM Bind dir file
 binds_dir: /rw/config/qubes-bind-dirs.d

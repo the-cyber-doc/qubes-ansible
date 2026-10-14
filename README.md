@@ -145,7 +145,7 @@ loads `vars/sys_gpu.yml` to get the GPU PCI IDs. The OCR DVM play loads
 Windows VMs are listed in an explicit `windows_vms` inventory group. Any play that
 must skip Windows uses the `:!windows_vms` host pattern exclusion. All package
 installs go through `roles/common/tasks/packages.yml`, which guards every task with
-`when: ansible_os_family == 'Debian'` or `when: ansible_os_family == 'RedHat'`, so
+`when: ansible_facts.os_family == 'Debian'` or `when: ansible_facts.os_family == 'RedHat'`, so
 they are harmless even if a Windows host is accidentally targeted.
 
 ### Disabled tasks
@@ -196,7 +196,7 @@ without removing the code.
 │
 └── roles/
     ├── common/                  # Shared tasks, listed first in every VM play: packages.yml (apt/dnf install), vm_type.yml (type-aware roles)
-    ├── base_packages/           # htop + tmux + ... on any Linux VM (apt or dnf via ansible_os_family)
+    ├── base_packages/           # htop + tmux + ... on any Linux VM (apt or dnf via ansible_facts.os_family)
     ├── type_clipboard/          # Type-aware: xdotool clipboard typing (Ctrl + right-click menu, Ctrl+Alt+V) in every Linux template; nothing (AppVM)
     ├── shell/                   # Type-aware: bash dotfiles from external/dotFiles/bash into /etc/skel (template) or the user's home (AppVM/DVM)
     ├── llm_template/            # NVIDIA drivers, CUDA, Ollama service + systemd overrides

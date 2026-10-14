@@ -1,21 +1,40 @@
 ---
 # Runs in the TemplateVM (selected by main.yml).
-- name: Install additional packages
-  ansible.builtin.include_role:
-    name: common
-    tasks_from: packages
-  vars:
-    packages_redhat: "{{ vpn_packages_redhat }}"
-- name: Download Proton repository
-  command:
-    cmd: "curl -L -o /tmp/proton_repo.rpm {{ proton_vpn_repo_url }}"
-- name: Install Proton repository
-  ansible.builtin.command:
-    cmd: dnf install -y /tmp/proton_repo.rpm
+- name: Add ProtonVPN Fedora repository
+  ansible.builtin.yum_repository:
+    name: protonvpn
+    description: ProtonVPN Fedora repository
+    baseurl: "{{ proton_vpn_repo_url_redhat }}"
+    gpgcheck: true
+    gpgkey: "{{ proton_vpn_repo_url_redhat }}/public_key.asc"
+    enabled: true
+  when: ansible_facts.os_family == "RedHat"
+
+# apt-key no longer exists on Debian 13: the key goes in its own keyring file,
+# referenced from the repository line with signed-by
+- name: Download ProtonVPN Apt key
+  ansible.builtin.get_url:
+    url: "{{ proton_vpn_repo_url_debian }}/public_key.asc"
+    dest: "{{ proton_vpn_keyring_debian }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_facts.os_family == "Debian"
+
+- name: Add Apt repository
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by={{ proton_vpn_keyring_debian }}] {{ proton_vpn_repo_url_debian }} stable main
+    state: present
+    filename: protonvpn-stable
+    update_cache: true
+    validate_certs: true
+  when: ansible_facts.os_family == "Debian"
+
 # proton-vpn-daemon's %posttrans ends with "systemctl start
 # me.proton.vpn.split_tunneling.service", which fails in the template: dnf then
 # reports an error on the first install although every package is installed.
 # The rescue accepts that case and still fails if a package is really missing.
+# Any other OS family has no such known error, so the rescue re-raises it.
 - name: Update packages and install Proton App
   block:
     - name: Install Proton App
@@ -24,16 +43,16 @@
         tasks_from: packages
       vars:
         packages_upgrade: true
-        packages_redhat: "{{ vpn_proton_packages_redhat }}"
+        packages_all: "{{ vpn_packages }}"
+        packages_redhat: "{{ vpn_packages_redhat }}"
+        packages_debian: "{{ vpn_packages_debian }}"
   rescue:
     - name: Check the Proton App packages are installed despite the dnf error
       ansible.builtin.command:
-        cmd: "rpm -q {{ vpn_proton_packages_redhat | join(' ') }}"
+        cmd: "rpm -q {{ vpn_packages | join(' ') }}"
       changed_when: false
-- name: Deploy dconf drop-in to enable AppIndicator extension
-  ansible.builtin.copy:
-    src: 00-appindicator
-    dest: /etc/dconf/db/local.d/00-appindicator
-    owner: root
-    group: root
-    mode: "0644"
+      when: ansible_facts.os_family == "RedHat"
+    - name: Re-raise the package installation error
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('Package installation failed') }}"
+      when: ansible_facts.os_family != "RedHat"

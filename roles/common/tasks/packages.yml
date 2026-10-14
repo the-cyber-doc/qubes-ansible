@@ -1,6 +1,6 @@
 ---
 # Installs packages on a Linux VM: apt on Debian, dnf on RedHat; any other OS family
-# (e.g. Windows) is skipped. Needs gathered facts (ansible_os_family). Inputs, all optional:
+# (e.g. Windows) is skipped. Needs gathered facts (ansible_facts.os_family). Inputs, all optional:
 #   packages_all           package names identical on every OS family
 #   packages_debian        Debian-only package names
 #   packages_redhat        RedHat-only package names
@@ -13,15 +13,15 @@
   vars:
     _packages: >-
       {{ (packages_all | default([]))
-         + (packages_debian | default([]) if ansible_os_family == 'Debian' else [])
-         + (packages_redhat | default([]) if ansible_os_family == 'RedHat' else []) }}
+         + (packages_debian | default([]) if ansible_facts.os_family == 'Debian' else [])
+         + (packages_redhat | default([]) if ansible_facts.os_family == 'RedHat' else []) }}
   block:
     - name: Upgrade system (Debian)
       ansible.builtin.apt:
         upgrade: dist
         update_cache: true
       when:
-        - ansible_os_family == 'Debian'
+        - ansible_facts.os_family == 'Debian'
         - packages_upgrade | default(false) | bool
 
     - name: Upgrade system (RedHat)
@@ -30,7 +30,7 @@
         state: latest
         update_cache: true
       when:
-        - ansible_os_family == 'RedHat'
+        - ansible_facts.os_family == 'RedHat'
         - packages_upgrade | default(false) | bool
 
     - name: Install packages (Debian)
@@ -39,7 +39,7 @@
         state: present
         update_cache: "{{ packages_update_cache | default(false) | bool }}"
       when:
-        - ansible_os_family == 'Debian'
+        - ansible_facts.os_family == 'Debian'
         - _packages | length > 0
 
     - name: Install packages (RedHat)
@@ -48,5 +48,5 @@
         state: present
         update_cache: "{{ packages_update_cache | default(false) | bool }}"
       when:
-        - ansible_os_family == 'RedHat'
+        - ansible_facts.os_family == 'RedHat'
         - _packages | length > 0

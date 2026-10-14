@@ -4,7 +4,7 @@
 # Linux only: Windows VMs are skipped.
 # files/bash is a symlink to external/dotFiles/bash (git submodule).
 - name: Configure shell
-  when: ansible_os_family in ['Debian', 'RedHat']
+  when: ansible_facts.os_family in ['Debian', 'RedHat']
   block:
     - name: Detect Qubes VM type
       ansible.builtin.include_role:

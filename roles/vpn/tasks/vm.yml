@@ -2,7 +2,7 @@
 # Runs in the AppVM/DVM (selected by main.yml).
 - name: Ensure autostart directory exists
   ansible.builtin.file:
-    path: "{{ vpn_autostart_dir }}"
+    path: "{{ vm_autostart_dir }}"
     state: directory
     owner: "{{ vm_user }}"
     group: "{{ vm_group }}"
@@ -11,7 +11,51 @@
 - name: Link Proton VPN .desktop into autostart
   ansible.builtin.file:
     src: "{{ vpn_proton_desktop_file }}"
-    dest: "{{ vpn_autostart_dir }}/{{ vpn_proton_desktop_file | basename }}"
+    dest: "{{ vm_autostart_dir }}/{{ vpn_proton_desktop_file | basename }}"
     state: link
-    owner: "{{ vm_user }}"
-    group: "{{ vm_group }}"
+
+- name: Link Terminator .desktop into autostart
+  ansible.builtin.file:
+    src: "{{ vpn_terminator_desktop_file }}"
+    dest: "{{ vm_autostart_dir }}/{{ vpn_terminator_desktop_file | basename }}"
+    state: link
+
+- name: Create the Proton VPN config directory
+  ansible.builtin.file:
+    path: "{{ vpn_proton_config_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Install the ProtonVPN config
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ vpn_proton_config_dir }}/"
+    mode: "0644"
+  loop:
+    - "app-config.json"
+    - "settings.json"
+
+- name: Create the keyrings directory
+  ansible.builtin.file:
+    path: "{{ keyrings_dir }}"
+    state: directory
+    mode: "0700"
+
+- name: Install the keyring default
+  ansible.builtin.copy:
+    src: "keyrings/default"
+    dest: "{{ keyrings_dir }}/"
+    mode: "0600"
+
+- name: Install the keyring with Proton VPN credentials
+  ansible.builtin.template:
+    src: Default.keyring.j2
+    dest: "{{ keyrings_dir }}/Default.keyring"
+    mode: "0600"
+
+- name: Configure killswitch
+  become: yes
+  ansible.builtin.lineinfile:
+    path: /rw/config/qubes-firewall-user-script
+    regexp: '^nft add'
+    line: "{{ vpn_firewall_killswitch }}"

@@ -3,7 +3,7 @@
 # in a StandaloneVM (see roles/common/tasks/vm_type.yml).
 # Linux only: Windows VMs (also in the templatevms group) are skipped.
 - name: Configure type clipboard
-  when: ansible_os_family in ['Debian', 'RedHat']
+  when: ansible_facts.os_family in ['Debian', 'RedHat']
   block:
     - name: Detect Qubes VM type
       ansible.builtin.include_role:

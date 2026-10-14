@@ -3,7 +3,7 @@
 - hosts: "templatevms"
   connection: qubes
   gather_facts: false
-  # pre_tasks, not tasks: roles run before tasks and need ansible_os_family
+  # pre_tasks, not tasks: roles run before tasks and need ansible_facts.os_family
   pre_tasks:
     - name: Gather facts
       ansible.builtin.setup:
@@ -22,13 +22,13 @@
         path: /usr/bin/terminator
         priority: 60
       become: yes
-      when: ansible_os_family in ['Debian', 'RedHat']
+      when: ansible_facts.os_family in ['Debian', 'RedHat']
 
 # Base config on the AppVM, DVM and Standalone except Windows
 - hosts: "appvms:standalonevms:!windows_vms"
   connection: qubes
   gather_facts: false
-  # pre_tasks, not tasks: roles run before tasks and need ansible_os_family
+  # pre_tasks, not tasks: roles run before tasks and need ansible_facts.os_family
   pre_tasks:
     - name: Gather facts
       ansible.builtin.setup:
